@@ -39,6 +39,8 @@ function App() {
     error: dictionaryError,
     dictionaryLoaded,
     dictionarySize,
+    loadingProgress,
+    isLoading: isDictionaryLoading,
   } = useDictionary();
 
   // Process text into clickable words
@@ -125,9 +127,23 @@ function App() {
               📖 {dictionarySize.toLocaleString()} 词汇
             </div>
           )}
-          {!dictionaryLoaded && (
+          {isDictionaryLoading && (
+            <div className="text-sm text-orange-600 space-y-2">
+              <div>🔄 加载字典中... ({loadingProgress}%)</div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${loadingProgress}%` }}
+                />
+              </div>
+              <div className="text-xs text-gray-500">
+                {loadingProgress < 50 ? '下载中...' : '解析中...'}
+              </div>
+            </div>
+          )}
+          {!dictionaryLoaded && !isDictionaryLoading && (
             <div className="text-sm text-orange-600">
-              🔄 加载中...
+              🔄 准备中...
             </div>
           )}
         </div>

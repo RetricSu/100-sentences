@@ -6,14 +6,22 @@ export const useDictionary = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dictionaryLoaded, setDictionaryLoaded] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Load ECDICT on initialization
   useEffect(() => {
     const loadECDict = async () => {
       try {
         setLoading(true);
-        await ecdictService.loadDictionary();
+        setError(null);
+        setLoadingProgress(0);
+        
+        await ecdictService.loadDictionary((progress) => {
+          setLoadingProgress(Math.round(progress));
+        });
+        
         setDictionaryLoaded(true);
+        setLoadingProgress(100);
         console.log('ECDICT loaded successfully');
       } catch (err) {
         setError('Failed to load dictionary');
@@ -27,6 +35,7 @@ export const useDictionary = () => {
       loadECDict();
     } else {
       setDictionaryLoaded(true);
+      setLoadingProgress(100);
     }
   }, []);
 
@@ -80,5 +89,7 @@ export const useDictionary = () => {
     error,
     dictionaryLoaded,
     dictionarySize: ecdictService.getDictionarySize(),
+    loadingProgress,
+    isLoading: ecdictService.isLoading(),
   };
 }; 
