@@ -18,6 +18,10 @@ export const useSpeech = () => {
   const timeoutRef = useRef<number | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const sequenceRef = useRef<{ isCancelled: boolean; startIndex: number }>({ isCancelled: false, startIndex: 0 });
+  
+  // Refs to always use latest voice and rate values
+  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const rateRef = useRef<number>(0.9);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -66,6 +70,15 @@ export const useSpeech = () => {
     };
   }, []);
 
+  // Keep refs synchronized with state
+  useEffect(() => {
+    selectedVoiceRef.current = selectedVoice;
+  }, [selectedVoice]);
+
+  useEffect(() => {
+    rateRef.current = rate;
+  }, [rate]);
+
   // Add effect to sync isSpeaking state with speech synthesis
   useEffect(() => {
     const interval = setInterval(() => {
@@ -110,7 +123,7 @@ export const useSpeech = () => {
 
   // Enhanced speak function to handle sentence context
   const speak = useCallback((text: string, sentenceIndex?: number) => {
-    if (!isSupported || !selectedVoice) {
+    if (!isSupported || !selectedVoiceRef.current) {
       console.warn('Speech synthesis not available');
       return;
     }
@@ -128,9 +141,9 @@ export const useSpeech = () => {
     }
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = selectedVoice;
-    utterance.lang = selectedVoice.lang;
-    utterance.rate = rate;
+    utterance.voice = selectedVoiceRef.current;
+    utterance.lang = selectedVoiceRef.current.lang;
+    utterance.rate = rateRef.current;
     utterance.pitch = 1.0;
     
     utterance.onstart = () => {
@@ -153,7 +166,7 @@ export const useSpeech = () => {
     
     currentUtteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [selectedVoice, rate, isSupported]);
+  }, [isSupported]);
 
   // Speak current sentence
   const speakCurrentSentence = useCallback(() => {
@@ -196,7 +209,7 @@ export const useSpeech = () => {
 
   // Enhanced speakAll with sentence sequence control
   const speakAll = useCallback((text: string, startFromIndex: number = 0) => {
-    if (!isSupported || !selectedVoice) {
+    if (!isSupported || !selectedVoiceRef.current) {
       console.warn('Speech synthesis not available');
       return;
     }
@@ -233,9 +246,9 @@ export const useSpeech = () => {
       const sentence = processedSentences[currentIndex].trim();
       if (sentence) {
         const utterance = new SpeechSynthesisUtterance(sentence);
-        utterance.voice = selectedVoice;
-        utterance.lang = selectedVoice.lang;
-        utterance.rate = rate;
+        utterance.voice = selectedVoiceRef.current;
+        utterance.lang = selectedVoiceRef.current?.lang || 'en-US';
+        utterance.rate = rateRef.current;
         utterance.pitch = 1.0;
         
         utterance.onstart = () => {
@@ -271,7 +284,7 @@ export const useSpeech = () => {
 
     // Start speaking
     speakNext();
-  }, [selectedVoice, rate, isSupported, processSentences]);
+  }, [isSupported, processSentences]);
 
   // Enhanced stop function
   const stop = useCallback(() => {
