@@ -156,6 +156,7 @@ function App() {
       if (sentenceIndex >= 0 && sentenceIndex < localSentences.length) {
         setLocalCurrentSentenceIndex(sentenceIndex);
         jumpToSentence(sentenceIndex);
+        speak(localSentences[sentenceIndex]);
       }
     }
   }, [speak, lookupWord, jumpToSentence]);
