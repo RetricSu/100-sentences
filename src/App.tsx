@@ -14,6 +14,7 @@ function App() {
   const [inputText, setInputText] = useState('');
   const [displayText, setDisplayText] = useState(defaultText);
   const [processedHtml, setProcessedHtml] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
   
   // Dictionary popup state
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
@@ -51,7 +52,7 @@ function App() {
     
     return paragraphs.map(paragraph => {
       const words = paragraph.trim().split(/\s+/);
-      return words.map(word => `<span class="word cursor-pointer px-1 py-0.5 rounded-md hover:bg-blue-100 hover:text-blue-800 transition-colors duration-200">${word}</span>`).join(' ');
+      return words.map(word => `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`).join(' ');
     }).join('\n\n');
   }, []);
 
@@ -115,125 +116,174 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 font-sans">
-      <div className="max-w-3xl mx-auto px-6 py-6">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Click-to-Read
-          </h1>
-          {dictionaryLoaded && (
-            <div className="text-sm text-green-600">
-              📖 {dictionarySize.toLocaleString()} 词汇
-            </div>
-          )}
-          {isDictionaryLoading && (
-            <div className="text-sm text-orange-600 space-y-2">
-              <div>🔄 加载字典中... ({loadingProgress}%)</div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Click-to-Read
+            </h1>
+            {dictionaryLoaded && (
+              <div className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                📖 {dictionarySize.toLocaleString()} words
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            {/* Reading Control */}
+            <button
+              onClick={() => isSpeaking ? stop() : speakAll(displayText)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
+                isSpeaking 
+                  ? 'bg-red-500 hover:bg-red-600 text-white' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
+            >
+              <span className="hidden sm:inline">{isSpeaking ? 'Stop' : 'Read All'}</span>
+            </button>
+            
+            {/* Settings Toggle */}
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              title="Settings"
+            >
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* Loading Bar */}
+        {isDictionaryLoading && (
+          <div className="bg-orange-50 px-4 py-2 border-t border-orange-200">
+            <div className="max-w-5xl mx-auto">
+              <div className="flex items-center justify-between text-sm text-orange-600 mb-2">
+                <span>Loading dictionary... ({loadingProgress}%)</span>
+                <span className="text-xs">{loadingProgress < 50 ? 'Downloading...' : 'Processing...'}</span>
+              </div>
+              <div className="w-full bg-orange-200 rounded-full h-2">
                 <div 
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-orange-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${loadingProgress}%` }}
                 />
               </div>
-              <div className="text-xs text-gray-500">
-                {loadingProgress < 50 ? '下载中...' : '解析中...'}
+            </div>
+          </div>
+        )}
+      </header>
+
+      <div className="max-w-5xl mx-auto px-4 py-6 flex gap-6">
+        {/* Settings Sidebar */}
+        <div className={`transition-all duration-300 ${showSettings ? 'w-80' : 'w-0'} overflow-hidden`}>
+          <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+            <h3 className="font-medium text-gray-800 mb-4">Settings</h3>
+            
+            {/* Input Area */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Input Text
+              </label>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Enter English text or leave empty to use default..."
+                className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+              />
+              <button
+                onClick={handleConvert}
+                className="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
+              >
+                Update Text
+              </button>
+            </div>
+
+            {/* Voice Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Voice
+              </label>
+              <select
+                value={voices.findIndex(v => v.voice === selectedVoice)}
+                onChange={(e) => {
+                  const index = parseInt(e.target.value);
+                  if (index >= 0 && voices[index]) {
+                    setSelectedVoice(voices[index].voice);
+                  }
+                }}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value={-1}>Select voice...</option>
+                {voices.map((voiceOption, index) => (
+                  <option key={index} value={index}>
+                    {voiceOption.voice.name} ({voiceOption.voice.lang})
+                    {voiceOption.voice.localService ? ' 📍' : ' ☁️'}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Speed Control */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reading Speed: {rate}x
+              </label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={rate}
+                onChange={(e) => setRate(parseFloat(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0.5x</span>
+                <span>2x</span>
               </div>
             </div>
-          )}
-          {!dictionaryLoaded && !isDictionaryLoading && (
-            <div className="text-sm text-orange-600">
-              🔄 准备中...
-            </div>
-          )}
-        </div>
-
-        {/* Input Area */}
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="输入英文文本..."
-          className="w-full h-24 p-4 border border-gray-300 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm mb-3"
-        />
-
-        {/* Convert Button */}
-        <button
-          onClick={handleConvert}
-          className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium mb-4"
-        >
-          转换文本
-        </button>
-
-        {/* Settings */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-          <select
-            value={voices.findIndex(v => v.voice === selectedVoice)}
-            onChange={(e) => {
-              const index = parseInt(e.target.value);
-              if (index >= 0 && voices[index]) {
-                setSelectedVoice(voices[index].voice);
-              }
-            }}
-            className="sm:col-span-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value={-1}>选择语音...</option>
-            {voices.map((voiceOption, index) => (
-              <option key={index} value={index}>
-                {voiceOption.voice.name} ({voiceOption.voice.lang})
-                {voiceOption.voice.localService ? ' 📍' : ' ☁️'}
-              </option>
-            ))}
-          </select>
-          
-          <div className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg">
-            <input
-              type="range"
-              min="0.5"
-              max="2"
-              step="0.1"
-              value={rate}
-              onChange={(e) => setRate(parseFloat(e.target.value))}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-            />
-            <span className="text-sm text-gray-600 min-w-12 text-center font-medium">
-              {rate}x
-            </span>
           </div>
         </div>
 
-        {/* Speech Control */}
-        <button
-          onClick={() => isSpeaking ? stop() : speakAll(displayText)}
-          className={`w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 mb-4 focus:outline-none focus:ring-2 ${
-            isSpeaking 
-              ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500' 
-              : 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500'
-          }`}
-        >
-          {isSpeaking ? '⏸️ 停止朗读' : '▶️ 全文朗读'}
-        </button>
-
-        {/* Display Area */}
-        <div className="min-h-32 p-4 bg-white rounded-lg border border-gray-200">
-          <div
-            onClick={handleWordClick}
-            dangerouslySetInnerHTML={{
-              __html: processedHtml.split('\n\n').map(p => `<p class="mb-4 last:mb-0">${p}</p>`).join('')
-            }}
-            className="text-base leading-relaxed text-gray-800"
-          />
+        {/* Main Content Area */}
+        <div className="flex-1 min-w-0">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <div
+              onClick={handleWordClick}
+              dangerouslySetInnerHTML={{
+                __html: processedHtml.split('\n\n').map(p => `<p class="mb-6 last:mb-0">${p}</p>`).join('')
+              }}
+              className="prose prose-lg max-w-none leading-relaxed text-gray-900"
+              style={{
+                fontSize: '18px',
+                lineHeight: '1.8',
+                fontFamily: 'Georgia, "Times New Roman", Times, serif'
+              }}
+            />
+            
+            {!processedHtml && (
+              <div className="text-center text-gray-500 py-12">
+                <p className="text-lg">Click "Update Text" to start reading</p>
+                <p className="text-sm mt-2">Or use the default text by clicking the button</p>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Dictionary Popup */}
-        <DictionaryPopup
-          word={currentWord}
-          data={dictionaryData}
-          loading={dictionaryLoading}
-          error={dictionaryError}
-          isVisible={dictionaryVisible}
-          onClose={closeDictionary}
-        />
       </div>
+
+      {/* Dictionary Popup */}
+      <DictionaryPopup
+        word={currentWord}
+        data={dictionaryData}
+        loading={dictionaryLoading}
+        error={dictionaryError}
+        isVisible={dictionaryVisible}
+        onClose={closeDictionary}
+      />
     </div>
   );
 }
