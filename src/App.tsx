@@ -21,6 +21,10 @@ function App() {
   const [currentWord, setCurrentWord] = useState('');
   const [dictionaryData, setDictionaryData] = useState<DictionaryEntry | null>(null);
   
+  // Local sentence state
+  const [localSentences, setLocalSentences] = useState<string[]>([]);
+  const [localCurrentSentenceIndex, setLocalCurrentSentenceIndex] = useState(0);
+  
   const {
     voices,
     selectedVoice,
@@ -32,6 +36,15 @@ function App() {
     speak,
     speakAll,
     stop,
+    // Enhanced sentence-based functionality
+    sentences,
+    currentSentenceIndex,
+    isPlayingSequence,
+    updateSentences,
+    speakCurrentSentence,
+    nextSentence,
+    previousSentence,
+    jumpToSentence,
   } = useSpeech();
 
   const {
@@ -44,28 +57,78 @@ function App() {
     isLoading: isDictionaryLoading,
   } = useDictionary();
 
-  // Process text into clickable words
+  // Process text into clickable words with sentence highlighting
   const processText = useCallback((text: string) => {
     if (!text.trim()) return '';
     
-    const paragraphs = text.trim().split(/\n\s*\n/);
+    // Split text into sentences for highlighting
+    const textSentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
     
-    return paragraphs.map(paragraph => {
-      const words = paragraph.trim().split(/\s+/);
-      return words.map(word => `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`).join(' ');
-    }).join('\n\n');
+    return textSentences.map((sentence, sentenceIndex) => {
+      const words = sentence.trim().split(/\s+/);
+      const processedWords = words.map(word => 
+        `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`
+      ).join(' ');
+      
+      // Highlight current sentence
+      const isCurrentSentence = sentenceIndex === localCurrentSentenceIndex;
+      const sentenceClass = isCurrentSentence 
+        ? 'current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 my-2 rounded-r-lg shadow-sm' 
+        : 'sentence py-1 my-1 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors';
+      
+      return `<div class="${sentenceClass}" data-sentence-index="${sentenceIndex}">${processedWords}</div>`;
+    }).join('');
+  }, [localCurrentSentenceIndex]);
+
+  // Process sentences separately
+  const processSentences = useCallback((text: string) => {
+    if (!text.trim()) return [];
+    
+    const rawSentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+    
+    return rawSentences.map(sentence => {
+      const trimmed = sentence.trim();
+      if (trimmed && !trimmed.match(/[.!?]$/)) {
+        return trimmed + '.';
+      }
+      return trimmed;
+    }).filter(s => s.length > 0);
   }, []);
 
   // Convert text when button is clicked
   const handleConvert = useCallback(() => {
     const textToProcess = inputText.trim() || defaultText;
     setDisplayText(textToProcess);
-    setProcessedHtml(processText(textToProcess));
-  }, [inputText, processText]);
+    
+    // Process text for display
+    const processedText = processText(textToProcess);
+    setProcessedHtml(processedText);
+    
+    // Update local sentences
+    const newSentences = processSentences(textToProcess);
+    setLocalSentences(newSentences);
+    setLocalCurrentSentenceIndex(0);
+    
+    // Update sentences in speech hook
+    updateSentences(textToProcess);
+  }, [inputText]);
 
-  // Handle word clicks
+  // Handle word clicks and sentence clicks
   const handleWordClick = useCallback(async (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
+    
+    // Handle sentence clicks
+    const sentenceDiv = target.closest('.sentence');
+    if (sentenceDiv && sentenceDiv.classList.contains('sentence')) {
+      const sentenceIndex = parseInt(sentenceDiv.getAttribute('data-sentence-index') || '0');
+      if (sentenceIndex >= 0 && sentenceIndex < localSentences.length) {
+        setLocalCurrentSentenceIndex(sentenceIndex);
+        jumpToSentence(sentenceIndex);
+      }
+      return;
+    }
+    
+    // Handle word clicks
     if (target.classList.contains('word')) {
       const word = target.textContent?.replace(/[^A-Za-z']/g, '') || '';
       if (!word) return;
@@ -85,7 +148,7 @@ function App() {
         console.error('Error looking up word:', error);
       }
     }
-  }, [speak, lookupWord]);
+  }, [speak, lookupWord, jumpToSentence]);
 
   // Close dictionary popup
   const closeDictionary = useCallback(() => {
@@ -94,10 +157,36 @@ function App() {
     setDictionaryData(null);
   }, []);
 
-  // Initialize processed text
+  // Initialize processed text and sentences
   useEffect(() => {
-    setProcessedHtml(processText(displayText));
-  }, [displayText, processText]);
+    if (displayText.trim()) {
+      const processedText = processText(displayText);
+      setProcessedHtml(processedText);
+      
+      // Update local sentences
+      const newSentences = processSentences(displayText);
+      setLocalSentences(newSentences);
+      setLocalCurrentSentenceIndex(0);
+      
+      // Update sentences in speech hook
+      updateSentences(displayText);
+    }
+  }, [displayText]);
+
+  // Update processed HTML when current sentence changes
+  useEffect(() => {
+    if (displayText.trim()) {
+      const processedText = processText(displayText);
+      setProcessedHtml(processedText);
+    }
+  }, [localCurrentSentenceIndex, displayText]);
+
+  // Sync local sentence index with hook sentence index
+  useEffect(() => {
+    if (currentSentenceIndex !== localCurrentSentenceIndex) {
+      setLocalCurrentSentenceIndex(currentSentenceIndex);
+    }
+  }, [currentSentenceIndex, localCurrentSentenceIndex]);
 
   if (!isSupported) {
     return (
@@ -132,9 +221,65 @@ function App() {
           </div>
           
           <div className="flex items-center space-x-3">
+            {/* Sentence Navigation Controls */}
+            {localSentences.length > 0 && (
+              <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2 border border-gray-200">
+                <button
+                  onClick={() => {
+                    if (localCurrentSentenceIndex > 0) {
+                      const prevIndex = localCurrentSentenceIndex - 1;
+                      setLocalCurrentSentenceIndex(prevIndex);
+                      jumpToSentence(prevIndex);
+                    }
+                  }}
+                  disabled={localCurrentSentenceIndex === 0}
+                  className="p-1 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Previous sentence"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    if (localSentences.length > 0 && localCurrentSentenceIndex < localSentences.length) {
+                      speak(localSentences[localCurrentSentenceIndex]);
+                    }
+                  }}
+                  disabled={localSentences.length === 0}
+                  className="px-3 py-1 bg-green-500 text-white rounded text-sm font-medium hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  title="Speak current sentence"
+                >
+                  ▶
+                </button>
+                
+                <button
+                  onClick={() => {
+                    if (localCurrentSentenceIndex < localSentences.length - 1) {
+                      const nextIndex = localCurrentSentenceIndex + 1;
+                      setLocalCurrentSentenceIndex(nextIndex);
+                      jumpToSentence(nextIndex);
+                    }
+                  }}
+                  disabled={localCurrentSentenceIndex >= localSentences.length - 1}
+                  className="p-1 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Next sentence"
+                >
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                
+                <span className="text-xs text-gray-500 ml-2">
+                  {localCurrentSentenceIndex + 1}/{localSentences.length}
+                </span>
+              </div>
+            )}
+            
             {/* Reading Control */}
             <button
-              onClick={() => isSpeaking ? stop() : speakAll(displayText)}
+              onClick={() => isSpeaking ? stop() : speakAll(displayText, localCurrentSentenceIndex)}
               disabled={!displayText.trim()}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
                 isSpeaking 
@@ -247,6 +392,33 @@ function App() {
                 <span>2x</span>
               </div>
             </div>
+
+            {/* Sentence Navigator */}
+            {localSentences.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sentence Navigator ({localSentences.length} sentences)
+                </label>
+                <div className="max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-2 space-y-1">
+                  {localSentences.map((sentence, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setLocalCurrentSentenceIndex(index);
+                        jumpToSentence(index);
+                      }}
+                      className={`w-full text-left text-xs p-2 rounded transition-colors ${
+                        index === localCurrentSentenceIndex
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-white hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      <span className="font-medium">{index + 1}:</span> {sentence.substring(0, 50)}...
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -256,7 +428,7 @@ function App() {
             <div
               onClick={handleWordClick}
               dangerouslySetInnerHTML={{
-                __html: processedHtml.split('\n\n').map(p => `<p class="mb-6 last:mb-0">${p}</p>`).join('')
+                __html: processedHtml
               }}
               className="prose prose-lg max-w-none leading-relaxed text-gray-900"
               style={{
