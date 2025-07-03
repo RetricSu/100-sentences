@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { VoiceOption } from '../types/index';
 
 export const useSpeech = () => {
@@ -7,6 +7,11 @@ export const useSpeech = () => {
   const [rate, setRate] = useState(0.9);
   const [isSupported, setIsSupported] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  
+  // Add refs to track speech state and cleanup
+  const speakingRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -55,13 +60,33 @@ export const useSpeech = () => {
     };
   }, []);
 
+  // Add effect to sync isSpeaking state with speech synthesis
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isSupported) {
+        const synthesisSpeaking = window.speechSynthesis.speaking;
+        if (speakingRef.current !== synthesisSpeaking) {
+          speakingRef.current = synthesisSpeaking;
+          setIsSpeaking(synthesisSpeaking);
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isSupported]);
+
   const speak = useCallback((text: string) => {
     if (!isSupported || !selectedVoice) {
       console.warn('Speech synthesis not available');
       return;
     }
 
+    // Clear any existing speech
     window.speechSynthesis.cancel();
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = selectedVoice;
@@ -69,10 +94,25 @@ export const useSpeech = () => {
     utterance.rate = rate;
     utterance.pitch = 1.0;
     
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onstart = () => {
+      speakingRef.current = true;
+      setIsSpeaking(true);
+    };
     
+    utterance.onend = () => {
+      speakingRef.current = false;
+      setIsSpeaking(false);
+      currentUtteranceRef.current = null;
+    };
+    
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event.error);
+      speakingRef.current = false;
+      setIsSpeaking(false);
+      currentUtteranceRef.current = null;
+    };
+    
+    currentUtteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
   }, [selectedVoice, rate, isSupported]);
 
@@ -82,16 +122,23 @@ export const useSpeech = () => {
       return;
     }
 
+    // Clear any existing speech and timeouts
     window.speechSynthesis.cancel();
-    setIsSpeaking(true);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
     
     // Split by sentences to avoid browser limitations
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
     let currentIndex = 0;
+    let isCancelled = false;
 
     const speakNext = () => {
-      if (currentIndex >= sentences.length) {
+      if (isCancelled || currentIndex >= sentences.length) {
+        speakingRef.current = false;
         setIsSpeaking(false);
+        currentUtteranceRef.current = null;
         return;
       }
 
@@ -103,29 +150,66 @@ export const useSpeech = () => {
         utterance.rate = rate;
         utterance.pitch = 1.0;
         
+        utterance.onstart = () => {
+          if (!isCancelled) {
+            speakingRef.current = true;
+            setIsSpeaking(true);
+          }
+        };
+        
         utterance.onend = () => {
-          currentIndex++;
-          setTimeout(speakNext, 200);
+          if (!isCancelled) {
+            currentIndex++;
+            timeoutRef.current = setTimeout(speakNext, 200);
+          }
         };
 
-        utterance.onerror = () => {
+        utterance.onerror = (event) => {
+          console.error('Speech synthesis error:', event.error);
+          speakingRef.current = false;
           setIsSpeaking(false);
+          currentUtteranceRef.current = null;
         };
 
+        currentUtteranceRef.current = utterance;
         window.speechSynthesis.speak(utterance);
       } else {
         currentIndex++;
-        speakNext();
+        timeoutRef.current = setTimeout(speakNext, 10);
       }
     };
 
+    // Store cancel function for cleanup
+    const cancelSpeech = () => {
+      isCancelled = true;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+
+    // Start speaking
     speakNext();
+
+    // Return cleanup function (not used in this implementation but good practice)
+    return cancelSpeech;
   }, [selectedVoice, rate, isSupported]);
 
   const stop = useCallback(() => {
     if (isSupported) {
+      // Clear all timeouts
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
+      // Cancel speech synthesis
       window.speechSynthesis.cancel();
+      
+      // Reset state immediately
+      speakingRef.current = false;
       setIsSpeaking(false);
+      currentUtteranceRef.current = null;
     }
   }, [isSupported]);
 
