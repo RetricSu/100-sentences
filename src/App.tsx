@@ -31,7 +31,6 @@ function App() {
     speak,
     speakAll,
     stop,
-    testVoice,
   } = useSpeech();
 
   const {
