@@ -37,13 +37,8 @@ function App() {
     speakAll,
     stop,
     // Enhanced sentence-based functionality
-    sentences,
     currentSentenceIndex,
-    isPlayingSequence,
     updateSentences,
-    speakCurrentSentence,
-    nextSentence,
-    previousSentence,
     jumpToSentence,
   } = useSpeech();
 

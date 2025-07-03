@@ -156,7 +156,7 @@ class ECDictService {
       const store = transaction.objectStore('dictionary');
       const request = store.get('ecdict_data');
       
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         request.onsuccess = () => {
           const result = request.result;
           if (result && result.data && result.version === this.getCacheVersion()) {

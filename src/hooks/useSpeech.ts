@@ -15,7 +15,7 @@ export const useSpeech = () => {
   
   // Add refs to track speech state and cleanup
   const speakingRef = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const sequenceRef = useRef<{ isCancelled: boolean; startIndex: number }>({ isCancelled: false, startIndex: 0 });
 
