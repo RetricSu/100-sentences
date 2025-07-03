@@ -25,6 +25,7 @@ function App() {
     selectedVoice,
     rate,
     isSupported,
+    isSpeaking,
     setSelectedVoice,
     setRate,
     speak,
@@ -49,7 +50,7 @@ function App() {
     
     return paragraphs.map(paragraph => {
       const words = paragraph.trim().split(/\s+/);
-      return words.map(word => `<span class="word cursor-pointer px-1 py-0.5 rounded hover:bg-yellow-200">${word}</span>`).join(' ');
+      return words.map(word => `<span class="word cursor-pointer px-1 py-0.5 rounded-md hover:bg-blue-100 hover:text-blue-800 transition-colors duration-200">${word}</span>`).join(' ');
     }).join('\n\n');
   }, []);
 
@@ -98,30 +99,37 @@ function App() {
 
   if (!isSupported) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center p-8">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">浏览器不支持</h1>
-          <p className="text-gray-600">抱歉，您的浏览器不支持 SpeechSynthesis。请使用最新的 Chrome 或 Edge 浏览器。</p>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-xl shadow-lg border border-red-200 max-w-md mx-4">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-red-500 text-2xl">⚠️</span>
+          </div>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">浏览器不支持</h1>
+          <p className="text-gray-600 leading-relaxed">
+            抱歉，您的浏览器不支持语音合成功能。请使用最新版本的 Chrome 或 Edge 浏览器以获得最佳体验。
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <div className="max-w-prose mx-auto px-8 py-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 font-sans">
+      <div className="max-w-3xl mx-auto px-6 py-6">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold mb-2">Click-to-Read English Text</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            Click-to-Read
+          </h1>
           {dictionaryLoaded && (
-            <p className="text-sm text-green-600">
-              📖 Chinese dictionary loaded ({dictionarySize.toLocaleString()} words)
-            </p>
+            <div className="text-sm text-green-600">
+              📖 {dictionarySize.toLocaleString()} 词汇
+            </div>
           )}
           {!dictionaryLoaded && (
-            <p className="text-sm text-orange-600">
-              🔄 Loading dictionary...
-            </p>
+            <div className="text-sm text-orange-600">
+              🔄 加载中...
+            </div>
           )}
         </div>
 
@@ -129,12 +137,20 @@ function App() {
         <textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="请在这里输入英文文本，然后点击转换按钮..."
-          className="w-full h-32 mb-5 p-3 border border-gray-300 rounded resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="输入英文文本..."
+          className="w-full h-24 p-4 border border-gray-300 rounded-lg resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm mb-3"
         />
 
-        {/* Controls Row 1 */}
-        <div className="flex flex-wrap gap-3 items-center mb-5">
+        {/* Convert Button */}
+        <button
+          onClick={handleConvert}
+          className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium mb-4"
+        >
+          转换文本
+        </button>
+
+        {/* Settings */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           <select
             value={voices.findIndex(v => v.voice === selectedVoice)}
             onChange={(e) => {
@@ -143,7 +159,7 @@ function App() {
                 setSelectedVoice(voices[index].voice);
               }
             }}
-            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="sm:col-span-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value={-1}>选择语音...</option>
             {voices.map((voiceOption, index) => (
@@ -154,39 +170,7 @@ function App() {
             ))}
           </select>
           
-          <button
-            onClick={testVoice}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            测试语音
-          </button>
-          
-          <button
-            onClick={handleConvert}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            转换文本
-          </button>
-        </div>
-
-        {/* Controls Row 2 */}
-        <div className="flex flex-wrap gap-3 items-center mb-5">
-          <button
-            onClick={() => speakAll(displayText)}
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            全文朗读
-          </button>
-          
-          <button
-            onClick={stop}
-            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-          >
-            停止朗读
-          </button>
-          
-          <div className="flex items-center gap-2">
-            <label className="text-sm">语速:</label>
+          <div className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg">
             <input
               type="range"
               min="0.5"
@@ -194,20 +178,34 @@ function App() {
               step="0.1"
               value={rate}
               onChange={(e) => setRate(parseFloat(e.target.value))}
-              className="w-24"
+              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
-            <span className="text-sm text-gray-600 min-w-8">{rate}x</span>
+            <span className="text-sm text-gray-600 min-w-12 text-center font-medium">
+              {rate}x
+            </span>
           </div>
         </div>
 
+        {/* Speech Control */}
+        <button
+          onClick={() => isSpeaking ? stop() : speakAll(displayText)}
+          className={`w-full px-6 py-3 rounded-lg font-medium transition-all duration-200 mb-4 focus:outline-none focus:ring-2 ${
+            isSpeaking 
+              ? 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500' 
+              : 'bg-green-500 hover:bg-green-600 text-white focus:ring-green-500'
+          }`}
+        >
+          {isSpeaking ? '⏸️ 停止朗读' : '▶️ 全文朗读'}
+        </button>
+
         {/* Display Area */}
-        <div className="min-h-24 border border-gray-300 p-4 rounded bg-gray-50">
+        <div className="min-h-32 p-4 bg-white rounded-lg border border-gray-200">
           <div
             onClick={handleWordClick}
             dangerouslySetInnerHTML={{
               __html: processedHtml.split('\n\n').map(p => `<p class="mb-4 last:mb-0">${p}</p>`).join('')
             }}
-            className="text-base leading-relaxed"
+            className="text-base leading-relaxed text-gray-800"
           />
         </div>
 

@@ -6,6 +6,7 @@ export const useSpeech = () => {
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [rate, setRate] = useState(0.9);
   const [isSupported, setIsSupported] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
@@ -68,6 +69,10 @@ export const useSpeech = () => {
     utterance.rate = rate;
     utterance.pitch = 1.0;
     
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
     window.speechSynthesis.speak(utterance);
   }, [selectedVoice, rate, isSupported]);
 
@@ -78,13 +83,17 @@ export const useSpeech = () => {
     }
 
     window.speechSynthesis.cancel();
+    setIsSpeaking(true);
     
     // Split by sentences to avoid browser limitations
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
     let currentIndex = 0;
 
     const speakNext = () => {
-      if (currentIndex >= sentences.length) return;
+      if (currentIndex >= sentences.length) {
+        setIsSpeaking(false);
+        return;
+      }
 
       const sentence = sentences[currentIndex].trim();
       if (sentence) {
@@ -97,6 +106,10 @@ export const useSpeech = () => {
         utterance.onend = () => {
           currentIndex++;
           setTimeout(speakNext, 200);
+        };
+
+        utterance.onerror = () => {
+          setIsSpeaking(false);
         };
 
         window.speechSynthesis.speak(utterance);
@@ -112,6 +125,7 @@ export const useSpeech = () => {
   const stop = useCallback(() => {
     if (isSupported) {
       window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
   }, [isSupported]);
 
@@ -124,6 +138,7 @@ export const useSpeech = () => {
     selectedVoice,
     rate,
     isSupported,
+    isSpeaking,
     setSelectedVoice,
     setRate,
     speak,
