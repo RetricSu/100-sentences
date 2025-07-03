@@ -1,94 +1,84 @@
-import { useState, useCallback } from 'react';
-import { DictionaryEntry, ApiWordData } from '../types/index';
-import { offlineDictionary } from '../data/offlineDictionary';
-
-interface DictionaryState {
-  word: string;
-  data: DictionaryEntry | null;
-  loading: boolean;
-  error: string | null;
-  isVisible: boolean;
-}
+import { useState, useEffect } from 'react';
+import { DictionaryEntry } from '../types/index';
+import { ecdictService } from '../data/ecdictService';
 
 export const useDictionary = () => {
-  const [state, setState] = useState<DictionaryState>({
-    word: '',
-    data: null,
-    loading: false,
-    error: null,
-    isVisible: false,
-  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dictionaryLoaded, setDictionaryLoaded] = useState(false);
 
-  const lookupWord = useCallback(async (word: string) => {
-    const cleanWord = word.toLowerCase().replace(/[^a-z]/g, '');
-    
-    setState(prev => ({
-      ...prev,
-      word: cleanWord,
-      loading: true,
-      error: null,
-      isVisible: true,
-    }));
+  // Load ECDICT on initialization
+  useEffect(() => {
+    const loadECDict = async () => {
+      try {
+        setLoading(true);
+        await ecdictService.loadDictionary();
+        setDictionaryLoaded(true);
+        console.log('ECDICT loaded successfully');
+      } catch (err) {
+        setError('Failed to load dictionary');
+        console.error('Error loading ECDICT:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!ecdictService.isLoaded()) {
+      loadECDict();
+    } else {
+      setDictionaryLoaded(true);
+    }
+  }, []);
+
+  const lookupWord = async (word: string): Promise<DictionaryEntry | null> => {
+    if (!dictionaryLoaded) {
+      console.warn('Dictionary not loaded yet');
+      return null;
+    }
 
     try {
-      // Try API first
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`);
-      
-      if (response.ok) {
-        const data: ApiWordData[] = await response.json();
-        const wordData = data[0];
-        
-        const dictionaryEntry: DictionaryEntry = {
-          phonetic: wordData.phonetic || (wordData.phonetics?.[0]?.text),
-          meanings: wordData.meanings.slice(0, 3).map(meaning => ({
-            partOfSpeech: meaning.partOfSpeech,
-            definition: meaning.definitions[0]?.definition || '',
-            example: meaning.definitions[0]?.example,
-          })),
-        };
-        
-        setState(prev => ({
-          ...prev,
-          data: dictionaryEntry,
-          loading: false,
-        }));
-      } else {
-        // Fallback to offline dictionary
-        useOfflineDictionary(cleanWord);
+      setLoading(true);
+      setError(null);
+
+      // Try ECDICT first (offline dictionary with Chinese translations)
+      const ecdictResult = ecdictService.lookupWord(word);
+      if (ecdictResult) {
+        return ecdictResult;
       }
-    } catch (error) {
-      console.log('API failed, using offline dictionary');
-      useOfflineDictionary(cleanWord);
-    }
-  }, []);
 
-  const useOfflineDictionary = useCallback((word: string) => {
-    if (offlineDictionary[word]) {
-      setState(prev => ({
-        ...prev,
-        data: offlineDictionary[word],
-        loading: false,
-      }));
-    } else {
-      setState(prev => ({
-        ...prev,
-        data: null,
-        loading: false,
-        error: 'Word not found in dictionary',
-      }));
-    }
-  }, []);
+      // If not found in ECDICT, try the online API as fallback
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      
+      if (!response.ok) {
+        return null;
+      }
 
-  const closeDictionary = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      isVisible: false,
-    }));
-  }, []);
+      const data = await response.json();
+      const entry = data[0];
+
+      return {
+        phonetic: entry.phonetic || entry.phonetics?.[0]?.text || undefined,
+        meanings: entry.meanings.map((meaning: any) => ({
+          partOfSpeech: meaning.partOfSpeech,
+          definition: meaning.definitions[0]?.definition || 'No definition available',
+          example: meaning.definitions[0]?.example,
+        })),
+        chinese: undefined, // Online API doesn't provide Chinese translations
+      };
+    } catch (err) {
+      setError('Failed to look up word');
+      console.error('Dictionary lookup error:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
-    ...state,
     lookupWord,
-    closeDictionary,
+    loading,
+    error,
+    dictionaryLoaded,
+    dictionarySize: ecdictService.getDictionarySize(),
   };
 }; 

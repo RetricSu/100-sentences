@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useSpeech } from './hooks/useSpeech';
 import { useDictionary } from './hooks/useDictionary';
 import { DictionaryPopup } from './components/DictionaryPopup';
+import { DictionaryEntry } from './types/index';
 
 const defaultText = `The Dragon Boat Festival happens on the 5th day of the 5th lunar month, usually in June. Chinese people call it "Duan‑wu Jie." The holiday remembers a kind poet named Qu Yuan. When his country was lost, he jumped into a river in sadness.
 
@@ -13,6 +14,11 @@ function App() {
   const [inputText, setInputText] = useState('');
   const [displayText, setDisplayText] = useState(defaultText);
   const [processedHtml, setProcessedHtml] = useState('');
+  
+  // Dictionary popup state
+  const [dictionaryVisible, setDictionaryVisible] = useState(false);
+  const [currentWord, setCurrentWord] = useState('');
+  const [dictionaryData, setDictionaryData] = useState<DictionaryEntry | null>(null);
   
   const {
     voices,
@@ -28,13 +34,11 @@ function App() {
   } = useSpeech();
 
   const {
-    word: dictionaryWord,
-    data: dictionaryData,
+    lookupWord,
     loading: dictionaryLoading,
     error: dictionaryError,
-    isVisible: dictionaryVisible,
-    lookupWord,
-    closeDictionary,
+    dictionaryLoaded,
+    dictionarySize,
   } = useDictionary();
 
   // Process text into clickable words
@@ -57,14 +61,35 @@ function App() {
   }, [inputText, processText]);
 
   // Handle word clicks
-  const handleWordClick = useCallback((event: React.MouseEvent) => {
+  const handleWordClick = useCallback(async (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     if (target.classList.contains('word')) {
       const word = target.textContent?.replace(/[^A-Za-z']/g, '') || '';
+      if (!word) return;
+      
       speak(word);
-      lookupWord(word);
+      
+      // Show popup immediately
+      setCurrentWord(word);
+      setDictionaryVisible(true);
+      setDictionaryData(null);
+      
+      // Lookup word
+      try {
+        const result = await lookupWord(word);
+        setDictionaryData(result);
+      } catch (error) {
+        console.error('Error looking up word:', error);
+      }
     }
   }, [speak, lookupWord]);
+
+  // Close dictionary popup
+  const closeDictionary = useCallback(() => {
+    setDictionaryVisible(false);
+    setCurrentWord('');
+    setDictionaryData(null);
+  }, []);
 
   // Initialize processed text
   useEffect(() => {
@@ -86,7 +111,19 @@ function App() {
     <div className="min-h-screen bg-gray-50 font-sans">
       <div className="max-w-prose mx-auto px-8 py-6">
         {/* Header */}
-        <h1 className="text-2xl font-bold mb-6 text-center">Click-to-Read English Text</h1>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold mb-2">Click-to-Read English Text</h1>
+          {dictionaryLoaded && (
+            <p className="text-sm text-green-600">
+              📖 Chinese dictionary loaded ({dictionarySize.toLocaleString()} words)
+            </p>
+          )}
+          {!dictionaryLoaded && (
+            <p className="text-sm text-orange-600">
+              🔄 Loading dictionary...
+            </p>
+          )}
+        </div>
 
         {/* Input Area */}
         <textarea
@@ -176,7 +213,7 @@ function App() {
 
         {/* Dictionary Popup */}
         <DictionaryPopup
-          word={dictionaryWord}
+          word={currentWord}
           data={dictionaryData}
           loading={dictionaryLoading}
           error={dictionaryError}

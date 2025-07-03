@@ -7,6 +7,23 @@ export interface WordDefinition {
 export interface DictionaryEntry {
   phonetic?: string;
   meanings: WordDefinition[];
+  chinese?: string;
+}
+
+export interface ECDictEntry {
+  word: string;
+  phonetic?: string;
+  definition?: string;
+  translation?: string;
+  pos?: string;
+  collins?: string;
+  oxford?: string;
+  tag?: string;
+  bnc?: string;
+  frq?: string;
+  exchange?: string;
+  detail?: string;
+  audio?: string;
 }
 
 export interface ApiWordData {

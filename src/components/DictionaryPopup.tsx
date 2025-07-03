@@ -65,26 +65,50 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
               </div>
             )}
 
-            {/* Meanings */}
-            {data.meanings.map((meaning, index) => (
-              <div key={index} className="mb-3">
-                <div className="flex flex-wrap items-start gap-2">
-                  <span className="font-bold text-orange-500 text-sm">
-                    {meaning.partOfSpeech}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-gray-800 text-sm leading-relaxed">
-                      {meaning.definition}
+            {/* Chinese Translation - Featured prominently */}
+            {data.chinese && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="text-sm text-yellow-700 font-medium mb-1">中文翻译</div>
+                <div className="text-lg text-yellow-900 font-medium leading-relaxed">
+                  {data.chinese.split('\n').map((line, index) => (
+                    <div key={index} className="mb-1">
+                      {line}
                     </div>
-                    {meaning.example && (
-                      <div className="text-gray-600 italic text-xs mt-1 ml-3">
-                        "{meaning.example}"
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* English Meanings */}
+            <div className="mb-2">
+              <div className="text-sm text-gray-600 font-medium mb-2">English Definition</div>
+              {data.meanings.map((meaning, index) => (
+                <div key={index} className="mb-3">
+                  <div className="flex flex-wrap items-start gap-2">
+                    <span className="font-bold text-orange-500 text-sm">
+                      {meaning.partOfSpeech}
+                    </span>
+                    <div className="flex-1">
+                      <div className="text-gray-800 text-sm leading-relaxed">
+                        {meaning.definition}
+                      </div>
+                      {meaning.example && (
+                        <div className="text-gray-600 italic text-xs mt-1 ml-3">
+                          "{meaning.example}"
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* No Chinese translation note */}
+            {!data.chinese && (
+              <div className="text-xs text-gray-500 mt-3 p-2 bg-gray-50 rounded">
+                💡 Chinese translation not available for this word
+              </div>
+            )}
           </div>
         )}
       </div>
