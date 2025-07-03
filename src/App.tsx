@@ -8,7 +8,7 @@ const defaultText = `The Dragon Boat Festival happens on the 5th day of the 5th 
 
 People raced long wooden boats shaped like dragons to try to save him. Today the races are the most exciting part of the festival. Each boat has a drummer who beats a rhythm so the paddlers can row together.
 
-Families also make and eat zongzi—sticky rice wrapped in bamboo leaves. Some put meat, peanuts, or red beans inside. Eating zongzi is said to keep bad luck away.`;
+Families also make and eat zongzi, sticky rice wrapped in bamboo leaves. Some put meat, peanuts, or red beans inside. Eating zongzi is said to keep bad luck away.`;
 
 function App() {
   const [inputText, setInputText] = useState('');
@@ -57,26 +57,41 @@ function App() {
     isLoading: isDictionaryLoading,
   } = useDictionary();
 
-  // Process text into clickable words with sentence highlighting
+  // Process text into clickable words with sentence highlighting and paragraph spacing
   const processText = useCallback((text: string) => {
     if (!text.trim()) return '';
     
-    // Split text into sentences for highlighting
-    const textSentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+    // First split into paragraphs
+    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+    let globalSentenceIndex = 0;
     
-    return textSentences.map((sentence, sentenceIndex) => {
-      const words = sentence.trim().split(/\s+/);
-      const processedWords = words.map(word => 
-        `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`
-      ).join(' ');
+    return paragraphs.map((paragraph, paragraphIndex) => {
+      // Split each paragraph into sentences
+      const paragraphSentences = paragraph.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
       
-      // Highlight current sentence
-      const isCurrentSentence = sentenceIndex === localCurrentSentenceIndex;
-      const sentenceClass = isCurrentSentence 
-        ? 'current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 my-2 rounded-r-lg shadow-sm' 
-        : 'sentence py-1 my-1 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors';
+      const processedSentences = paragraphSentences.map((sentence) => {
+        const words = sentence.trim().split(/\s+/);
+        const processedWords = words.map(word => 
+          `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`
+        ).join(' ');
+        
+        // Highlight current sentence
+        const isCurrentSentence = globalSentenceIndex === localCurrentSentenceIndex;
+        const sentenceClass = isCurrentSentence 
+          ? 'current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 my-2 rounded-r-lg shadow-sm' 
+          : 'sentence py-1 my-1 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors';
+        
+        const sentenceDiv = `<div class="${sentenceClass}" data-sentence-index="${globalSentenceIndex}">${processedWords}</div>`;
+        globalSentenceIndex++;
+        return sentenceDiv;
+      }).join('');
       
-      return `<div class="${sentenceClass}" data-sentence-index="${sentenceIndex}">${processedWords}</div>`;
+      // Wrap each paragraph with spacing
+      const paragraphClass = paragraphIndex === 0 
+        ? 'paragraph-block mb-8 first:mb-8' 
+        : 'paragraph-block mb-8 pt-4 border-t border-gray-100';
+      
+      return `<div class="${paragraphClass}">${processedSentences}</div>`;
     }).join('');
   }, [localCurrentSentenceIndex]);
 
@@ -117,18 +132,7 @@ function App() {
   const handleWordClick = useCallback(async (event: React.MouseEvent) => {
     const target = event.target as HTMLElement;
     
-    // Handle sentence clicks
-    const sentenceDiv = target.closest('.sentence');
-    if (sentenceDiv && sentenceDiv.classList.contains('sentence')) {
-      const sentenceIndex = parseInt(sentenceDiv.getAttribute('data-sentence-index') || '0');
-      if (sentenceIndex >= 0 && sentenceIndex < localSentences.length) {
-        setLocalCurrentSentenceIndex(sentenceIndex);
-        jumpToSentence(sentenceIndex);
-      }
-      return;
-    }
-    
-    // Handle word clicks
+    // Handle word clicks first (priority over sentence clicks)
     if (target.classList.contains('word')) {
       const word = target.textContent?.replace(/[^A-Za-z']/g, '') || '';
       if (!word) return;
@@ -146,6 +150,17 @@ function App() {
         setDictionaryData(result);
       } catch (error) {
         console.error('Error looking up word:', error);
+      }
+      return; // Important: return early to prevent sentence click
+    }
+    
+    // Handle sentence clicks (only if not clicking on a word)
+    const sentenceDiv = target.closest('.sentence');
+    if (sentenceDiv && sentenceDiv.classList.contains('sentence')) {
+      const sentenceIndex = parseInt(sentenceDiv.getAttribute('data-sentence-index') || '0');
+      if (sentenceIndex >= 0 && sentenceIndex < localSentences.length) {
+        setLocalCurrentSentenceIndex(sentenceIndex);
+        jumpToSentence(sentenceIndex);
       }
     }
   }, [speak, lookupWord, jumpToSentence]);
