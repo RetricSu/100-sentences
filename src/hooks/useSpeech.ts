@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import useLocalStorageState from 'use-local-storage-state';
 import { VoiceOption } from '../types/index';
 
 export const useSpeech = () => {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-  const [rate, setRate] = useState(0.9);
+  const [rate, setRate] = useLocalStorageState('tts-rate', { defaultValue: 0.9 });
   const [isSupported, setIsSupported] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  
+  // Store voice selection in localStorage using name and language
+  const [savedVoiceInfo, setSavedVoiceInfo] = useLocalStorageState<{name: string, lang: string} | null>('tts-voice', { defaultValue: null });
   
   // Enhanced sentence-based playback state
   const [sentences, setSentences] = useState<string[]>([]);
@@ -39,7 +43,18 @@ export const useSpeech = () => {
       
       setVoices(englishVoices);
 
-      // Auto-select best voice
+      // Try to restore saved voice first
+      if (savedVoiceInfo) {
+        const savedVoice = englishVoices.find(v => 
+          v.voice.name === savedVoiceInfo.name && v.voice.lang === savedVoiceInfo.lang
+        )?.voice;
+        if (savedVoice) {
+          setSelectedVoice(savedVoice);
+          return;
+        }
+      }
+
+      // Auto-select best voice if no saved voice or saved voice not found
       const bestVoice = englishVoices.find(v => 
         v.voice.lang === 'en-US' && v.voice.name.includes('Microsoft')
       )?.voice ||
@@ -68,7 +83,13 @@ export const useSpeech = () => {
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
     };
-  }, []);
+  }, [savedVoiceInfo]);
+
+  // Custom setSelectedVoice function that also saves to localStorage
+  const setSelectedVoiceWithStorage = useCallback((voice: SpeechSynthesisVoice) => {
+    setSelectedVoice(voice);
+    setSavedVoiceInfo({ name: voice.name, lang: voice.lang });
+  }, [setSavedVoiceInfo]);
 
   // Keep refs synchronized with state
   useEffect(() => {
@@ -319,7 +340,7 @@ export const useSpeech = () => {
     rate,
     isSupported,
     isSpeaking,
-    setSelectedVoice,
+    setSelectedVoice: setSelectedVoiceWithStorage,
     setRate,
     speak,
     speakAll,
