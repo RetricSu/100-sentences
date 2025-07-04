@@ -467,6 +467,7 @@ function App() {
         error={dictionaryError}
         isVisible={dictionaryVisible}
         onClose={closeDictionary}
+        onSpeak={speak}
       />
     </div>
   );

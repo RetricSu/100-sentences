@@ -8,6 +8,7 @@ interface DictionaryPopupProps {
   error: string | null;
   isVisible: boolean;
   onClose: () => void;
+  onSpeak: (text: string) => void;
 }
 
 export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
@@ -17,6 +18,7 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
   error,
   isVisible,
   onClose,
+  onSpeak,
 }) => {
   if (!isVisible) return null;
 
@@ -58,10 +60,21 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
               {word}
             </div>
 
-            {/* Phonetic */}
+            {/* Phonetic with play button */}
             {data.phonetic && (
-              <div className="text-gray-600 italic mb-3">
-                {data.phonetic}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="text-gray-600 italic">
+                  {data.phonetic}
+                </div>
+                <button
+                  onClick={() => onSpeak(word)}
+                  className="flex items-center justify-center w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors duration-200"
+                  title="Play pronunciation"
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                  </svg>
+                </button>
               </div>
             )}
 
