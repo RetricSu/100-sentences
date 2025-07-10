@@ -190,8 +190,9 @@ function App() {
       }
 
       // Handle sentence clicks (only if not clicking on a word)
-      const sentenceDiv = target.closest(".sentence");
-      if (sentenceDiv && sentenceDiv.classList.contains("sentence")) {
+      // Check for both regular sentences and currently selected sentences
+      const sentenceDiv = target.closest(".sentence, .current-sentence");
+      if (sentenceDiv && (sentenceDiv.classList.contains("sentence") || sentenceDiv.classList.contains("current-sentence"))) {
         const sentenceIndex = parseInt(
           sentenceDiv.getAttribute("data-sentence-index") || "0"
         );
