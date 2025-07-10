@@ -264,6 +264,18 @@ function App() {
     }
   }, [clearAllTexts]);
 
+  // Auto-load latest saved text on app initialization
+  useEffect(() => {
+    if (!savedTextsLoading && storedTexts.length > 0) {
+      // Load the most recent saved text (first in the array)
+      const latestText = storedTexts[0];
+      console.log('Auto-loading latest saved text:', latestText.title);
+      
+      setDisplayText(latestText.content);
+      setInputText(latestText.content);
+    }
+  }, [savedTextsLoading, storedTexts.length]); // Only run when loading finishes
+
   // Initialize processed text and sentences
   useEffect(() => {
     if (displayText.trim()) {
