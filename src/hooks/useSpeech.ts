@@ -138,9 +138,12 @@ export const useSpeech = () => {
   const updateSentences = useCallback((text: string) => {
     const newSentences = processSentences(text);
     setSentences(newSentences);
-    setCurrentSentenceIndex(0);
+    // Only reset sentence index if we're not currently speaking
+    if (!isSpeaking && !isPlayingSequence) {
+      setCurrentSentenceIndex(0);
+    }
     return newSentences;
-  }, [processSentences]);
+  }, [processSentences, isSpeaking, isPlayingSequence]);
 
   // Enhanced speak function to handle sentence context
   const speak = useCallback((text: string, sentenceIndex?: number) => {
@@ -244,7 +247,6 @@ export const useSpeech = () => {
 
     // Process sentences
     const processedSentences = processSentences(text);
-    setSentences(processedSentences);
     
     if (processedSentences.length === 0) return;
     
@@ -252,11 +254,14 @@ export const useSpeech = () => {
     sequenceRef.current = { isCancelled: false, startIndex: startFromIndex };
     setIsPlayingSequence(true);
     
-    let currentIndex = Math.max(0, Math.min(startFromIndex, processedSentences.length - 1));
-    setCurrentSentenceIndex(currentIndex);
+    // Update sentences state only once at the beginning
+    setSentences(processedSentences);
+    
+    // Use an object to track current index so it can be properly referenced
+    const indexTracker = { current: Math.max(0, Math.min(startFromIndex, processedSentences.length - 1)) };
 
     const speakNext = () => {
-      if (sequenceRef.current.isCancelled || currentIndex >= processedSentences.length) {
+      if (sequenceRef.current.isCancelled || indexTracker.current >= processedSentences.length) {
         speakingRef.current = false;
         setIsSpeaking(false);
         setIsPlayingSequence(false);
@@ -264,8 +269,9 @@ export const useSpeech = () => {
         return;
       }
 
-      const sentence = processedSentences[currentIndex].trim();
+      const sentence = processedSentences[indexTracker.current].trim();
       if (sentence) {
+        const sentenceIndex = indexTracker.current; // Capture the index for this utterance
         const utterance = new SpeechSynthesisUtterance(sentence);
         utterance.voice = selectedVoiceRef.current;
         utterance.lang = selectedVoiceRef.current?.lang || 'en-US';
@@ -276,13 +282,14 @@ export const useSpeech = () => {
           if (!sequenceRef.current.isCancelled) {
             speakingRef.current = true;
             setIsSpeaking(true);
-            setCurrentSentenceIndex(currentIndex);
+            // Update sentence index only when we actually start speaking
+            setCurrentSentenceIndex(sentenceIndex);
           }
         };
         
         utterance.onend = () => {
           if (!sequenceRef.current.isCancelled) {
-            currentIndex++;
+            indexTracker.current++;
             timeoutRef.current = setTimeout(speakNext, 300);
           }
         };
@@ -298,7 +305,7 @@ export const useSpeech = () => {
         currentUtteranceRef.current = utterance;
         window.speechSynthesis.speak(utterance);
       } else {
-        currentIndex++;
+        indexTracker.current++;
         timeoutRef.current = setTimeout(speakNext, 10);
       }
     };
