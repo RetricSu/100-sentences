@@ -7,17 +7,11 @@ import {
 } from "./hooks/useLocalStorage";
 import { DictionaryPopup } from "./components/DictionaryPopup";
 import { Header } from "./components/Header";
+import { SettingsPanel } from "./components/SettingsPanel";
 import { DictionaryEntry } from "./types/index";
-
-// Type for saved texts
-const defaultText = `The Dragon Boat Festival happens on the 5th day of the 5th lunar month, usually in June. Chinese people call it 'Duan‑wu Jie'. The holiday remembers a kind poet named Qu Yuan. When his country was lost, he jumped into a river in sadness.
-
-People raced long wooden boats shaped like dragons to try to save him. Today the races are the most exciting part of the festival. Each boat has a drummer who beats a rhythm so the paddlers can row together.
-
-Families also make and eat zongzi, sticky rice wrapped in bamboo leaves. Some put meat, peanuts, or red beans inside. Eating zongzi is said to keep bad luck away.`;
+import { defaultText } from "./data/const";
 
 function App() {
-  const [inputText, setInputText] = useState("");
   const [displayText, setDisplayText] = useState(defaultText);
   const [processedHtml, setProcessedHtml] = useState("");
   const [showSettings, setShowSettings] = useState(false);
@@ -67,10 +61,6 @@ function App() {
     deleteText,
     clearAllTexts,
   } = useLocalStorage();
-
-  // Saved texts UI state
-  const [showSavedTexts, setShowSavedTexts] = useState(false);
-  const [saveTextTitle, setSaveTextTitle] = useState("");
 
   // Process text into clickable words with sentence highlighting and paragraph spacing
   const processText = useCallback(
@@ -145,23 +135,22 @@ function App() {
       .filter((s) => s.length > 0);
   }, []);
 
-  // Convert text when button is clicked
-  const handleConvert = useCallback(() => {
-    const textToProcess = inputText.trim() || defaultText;
-    setDisplayText(textToProcess);
+  // Handle text updates from SettingsPanel
+  const handleTextUpdate = useCallback((text: string) => {
+    setDisplayText(text);
 
     // Process text for display
-    const processedText = processText(textToProcess);
+    const processedText = processText(text);
     setProcessedHtml(processedText);
 
     // Update local sentences
-    const newSentences = processSentences(textToProcess);
+    const newSentences = processSentences(text);
     setLocalSentences(newSentences);
     setLocalCurrentSentenceIndex(0);
 
     // Update sentences in speech hook
-    updateSentences(textToProcess);
-  }, [inputText]);
+    updateSentences(text);
+  }, [processText, processSentences, updateSentences]);
 
   // Handle word clicks and sentence clicks
   const handleWordClick = useCallback(
@@ -204,7 +193,7 @@ function App() {
         }
       }
     },
-    [speak, lookupWord, jumpToSentence]
+    [speak, lookupWord, jumpToSentence, localSentences]
   );
 
   // Close dictionary popup
@@ -214,34 +203,18 @@ function App() {
     setDictionaryData(null);
   }, []);
 
-  // Save current text
-  const handleSaveText = useCallback(() => {
-    if (!displayText.trim()) return;
-    const title = saveTextTitle.trim() || undefined;
-    saveText(displayText, title);
-    setSaveTextTitle("");
-    alert("Text saved successfully!");
-  }, [displayText, saveTextTitle, saveText]);
+  // Handle saving text from SettingsPanel
+  const handleSaveText = useCallback((text: string, title?: string) => {
+    saveText(text, title);
+  }, [saveText]);
 
   // Load saved text
   const handleLoadText = useCallback(
     (savedText: SavedTextType) => {
-      setDisplayText(savedText.content);
-      setInputText(savedText.content);
-
-      // Process text for display
-      const processedText = processText(savedText.content);
-      setProcessedHtml(processedText);
-
-      // Update local sentences
-      const newSentences = processSentences(savedText.content);
-      setLocalSentences(newSentences);
-      setLocalCurrentSentenceIndex(0);
-
-      // Update sentences in speech hook
-      updateSentences(savedText.content);
+      // Update display text and process it
+      handleTextUpdate(savedText.content);
     },
-    [processText, processSentences, updateSentences]
+    [handleTextUpdate]
   );
 
   // Delete saved text
@@ -296,10 +269,9 @@ function App() {
       const latestText = storedTexts[0];
       console.log('Auto-loading latest saved text:', latestText.title);
       
-      setDisplayText(latestText.content);
-      setInputText(latestText.content);
+      handleTextUpdate(latestText.content);
     }
-  }, [savedTextsLoading, storedTexts.length]); // Only run when loading finishes
+  }, [savedTextsLoading, storedTexts.length, handleTextUpdate]);
 
   // Initialize processed text and sentences
   useEffect(() => {
@@ -315,7 +287,7 @@ function App() {
       // Update sentences in speech hook
       updateSentences(displayText);
     }
-  }, [displayText]);
+  }, [displayText, processText, processSentences, updateSentences]);
 
   // Update processed HTML when current sentence changes
   useEffect(() => {
@@ -323,7 +295,7 @@ function App() {
       const processedText = processText(displayText);
       setProcessedHtml(processedText);
     }
-  }, [localCurrentSentenceIndex, displayText]);
+  }, [localCurrentSentenceIndex, displayText, processText]);
 
   // Sync local sentence index with hook sentence index
   useEffect(() => {
@@ -374,202 +346,22 @@ function App() {
             showSettings ? "w-80" : "w-0"
           } overflow-hidden`}
         >
-          <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
-            <h3 className="font-medium text-gray-800 mb-4">Settings</h3>
-
-            {/* Input Area */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Input Text
-              </label>
-              <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Enter English text or leave empty to use default..."
-                className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
-              />
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={handleConvert}
-                  className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
-                >
-                  Update Text
-                </button>
-                <button
-                  onClick={handleSaveText}
-                  disabled={!displayText.trim()}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  title="Save current text"
-                >
-                  💾
-                </button>
-              </div>
-
-              {/* Save Text Title Input */}
-              <div className="mt-2">
-                <input
-                  type="text"
-                  value={saveTextTitle}
-                  onChange={(e) => setSaveTextTitle(e.target.value)}
-                  placeholder="Optional: Enter title for saving..."
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Saved Texts Section */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Saved Texts ({storedTexts.length})
-                </label>
-                <button
-                  onClick={() => setShowSavedTexts(!showSavedTexts)}
-                  className="text-blue-500 hover:text-blue-700 text-sm"
-                >
-                  {showSavedTexts ? "Hide" : "Show"}
-                </button>
-              </div>
-
-              {showSavedTexts && (
-                <div className="bg-gray-50 rounded-lg p-3 max-h-64 overflow-y-auto">
-                  {savedTextsLoading ? (
-                    <div className="text-center text-gray-500 py-4">
-                      Loading saved texts...
-                    </div>
-                  ) : storedTexts.length === 0 ? (
-                    <div className="text-center text-gray-500 py-4">
-                      No saved texts yet
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {storedTexts.map((savedText) => (
-                        <div
-                          key={savedText.id}
-                          className="bg-white p-3 rounded border border-gray-200 hover:border-gray-300 transition-colors"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 truncate text-sm">
-                                {savedText.title}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {savedText.createdAt.toLocaleDateString()} at{" "}
-                                {savedText.createdAt.toLocaleTimeString()}
-                              </p>
-                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                                {savedText.content.substring(0, 100)}...
-                              </p>
-                            </div>
-                            <div className="flex space-x-1 ml-2">
-                              <button
-                                onClick={() => handleLoadText(savedText)}
-                                className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded"
-                                title="Load this text"
-                              >
-                                📖
-                              </button>
-                              <button
-                                onClick={() => handleDeleteText(savedText.id)}
-                                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
-                                title="Delete this text"
-                              >
-                                🗑️
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {storedTexts.length > 0 && (
-                        <div className="pt-2 border-t border-gray-200">
-                          <button
-                            onClick={handleClearAllTexts}
-                            className="w-full px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
-                          >
-                            Clear All Saved Texts
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Voice Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Voice
-              </label>
-              <select
-                value={voices.findIndex((v) => v.voice === selectedVoice)}
-                onChange={(e) => {
-                  const index = parseInt(e.target.value);
-                  if (index >= 0 && voices[index]) {
-                    setSelectedVoice(voices[index].voice);
-                  }
-                }}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              >
-                <option value={-1}>Select voice...</option>
-                {voices.map((voiceOption, index) => (
-                  <option key={index} value={index}>
-                    {voiceOption.voice.name} ({voiceOption.voice.lang})
-                    {voiceOption.voice.localService ? " 📍" : " ☁️"}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Speed Control */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reading Speed: {rate}x
-              </label>
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.1"
-                value={rate}
-                onChange={(e) => setRate(parseFloat(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>0.5x</span>
-                <span>2x</span>
-              </div>
-            </div>
-
-            {/* Sentence Navigator */}
-            {localSentences.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sentence Navigator ({localSentences.length} sentences)
-                </label>
-                <div className="max-h-32 overflow-y-auto bg-gray-50 rounded-lg p-2 space-y-1">
-                  {localSentences.map((sentence, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setLocalCurrentSentenceIndex(index);
-                        jumpToSentence(index);
-                      }}
-                      className={`w-full text-left text-xs p-2 rounded transition-colors ${
-                        index === localCurrentSentenceIndex
-                          ? "bg-blue-500 text-white"
-                          : "bg-white hover:bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      <span className="font-medium">{index + 1}:</span>{" "}
-                      {sentence.substring(0, 50)}...
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <SettingsPanel
+            onTextUpdate={handleTextUpdate}
+            defaultText={defaultText}
+            displayText={displayText}
+            savedTexts={storedTexts}
+            savedTextsLoading={savedTextsLoading}
+            onLoadText={handleLoadText}
+            onDeleteText={handleDeleteText}
+            onClearAllTexts={handleClearAllTexts}
+            onSaveText={handleSaveText}
+            voices={voices}
+            selectedVoice={selectedVoice}
+            onVoiceChange={setSelectedVoice}
+            rate={rate}
+            onRateChange={setRate}
+          />
         </div>
 
         {/* Main Content Area */}
