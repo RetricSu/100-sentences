@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface HeaderProps {
   // Dictionary status
@@ -6,18 +6,18 @@ interface HeaderProps {
   dictionarySize: number;
   isDictionaryLoading: boolean;
   loadingProgress: number;
-  
+
   // Sentence navigation
   localSentences: string[];
   localCurrentSentenceIndex: number;
   onSentenceNavigate: (index: number) => void;
   onSpeakCurrentSentence: () => void;
-  
+
   // Reading controls
   isSpeaking: boolean;
   displayText: string;
   onToggleReading: () => void;
-  
+
   // Settings
   onToggleSettings: () => void;
 }
@@ -48,6 +48,18 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const handleStopReading = () => {
+    if (isSpeaking) {
+      onToggleReading();
+    }
+  };
+
+  const handleStartReading = () => {
+    if (!isSpeaking) {
+      onToggleReading();
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -61,89 +73,137 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Sentence Navigation Controls */}
-          {localSentences.length > 0 && (
-            <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2 border border-gray-200">
-              <button
-                onClick={handlePreviousSentence}
-                disabled={localCurrentSentenceIndex === 0}
-                className="p-1 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Previous sentence"
-              >
-                <svg
-                  className="w-4 h-4 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-
-              <button
-                onClick={onSpeakCurrentSentence}
-                disabled={localSentences.length === 0}
-                className="px-3 py-1 bg-green-500 text-white rounded text-sm font-medium hover:bg-green-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                title="Speak current sentence"
-              >
-                ▶
-              </button>
-
-              <button
-                onClick={handleNextSentence}
-                disabled={localCurrentSentenceIndex >= localSentences.length - 1}
-                className="p-1 rounded hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Next sentence"
-              >
-                <svg
-                  className="w-4 h-4 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-
-              <span className="text-xs text-gray-500 ml-2">
-                {localCurrentSentenceIndex + 1}/{localSentences.length}
-              </span>
-            </div>
-          )}
-
-          {/* Reading Control */}
+          {/* Status Indicator */}
           <button
-            onClick={onToggleReading}
-            disabled={!displayText.trim()}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 ${
+            onClick={isSpeaking ? handleStopReading : undefined}
+            disabled={!isSpeaking}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
               isSpeaking
-                ? "bg-red-500 hover:bg-red-600 text-white"
-                : "bg-blue-500 hover:bg-blue-600 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                ? "bg-red-500 text-white hover:bg-red-600 cursor-pointer"
+                : "bg-gray-100 text-gray-600 cursor-default"
             }`}
+            title={isSpeaking ? "Click to stop reading" : "Reading status"}
           >
-            <span className="hidden sm:inline">
-              {isSpeaking ? "停止" : "朗读全文"}
-            </span>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isSpeaking ? "bg-white animate-pulse" : "bg-gray-400"
+              }`}
+            ></div>
+            <span>{isSpeaking ? "暂停" : "待机"}</span>
           </button>
 
-          {/* Settings Toggle */}
+          {/* Read All Button */}
           <button
-            onClick={onToggleSettings}
-            className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-            title="Settings"
+            onClick={handleStartReading}
+            disabled={!displayText.trim() || isSpeaking}
+            className="px-4 py-2 bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg"
+            title="Read all text"
           >
             <svg
-              className="w-5 h-5 text-gray-600"
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728"
+              />
+            </svg>
+            <span>朗读全文</span>
+          </button>
+
+          {/* Sentence Navigation */}
+          <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200">
+            <button
+              onClick={handlePreviousSentence}
+              disabled={localCurrentSentenceIndex === 0 || isSpeaking}
+              className="p-2 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-l-lg"
+              title="Previous sentence"
+            >
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+
+            <button
+              onClick={onSpeakCurrentSentence}
+              disabled={localSentences.length === 0 || isSpeaking}
+              className="px-3 py-2 bg-green-500 text-white font-medium hover:bg-green-600 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-1"
+              title="Speak current sentence"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19V6l12 6.5z"
+                />
+              </svg>
+              <span className="text-sm">朗读句子</span>
+            </button>
+
+            <button
+              onClick={handleNextSentence}
+              disabled={
+                localCurrentSentenceIndex >= localSentences.length - 1 ||
+                isSpeaking
+              }
+              className="p-2 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Next sentence"
+            >
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+
+            <div className="px-3 py-2 bg-gray-50 text-xs font-medium text-gray-500 rounded-r-lg border-l border-gray-200">
+              {localSentences.length > 0
+                ? `${localCurrentSentenceIndex + 1}/${localSentences.length}`
+                : "0/0"}
+            </div>
+          </div>
+
+          {/* Settings */}
+          <button
+            onClick={onToggleSettings}
+            disabled={isSpeaking}
+            className={`p-2 rounded-lg transition-colors duration-200 ${
+              isSpeaking
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-gray-50 text-gray-600 shadow-sm border border-gray-200"
+            }`}
+            title={isSpeaking ? "Settings disabled during reading" : "Settings"}
+          >
+            <svg
+              className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -186,4 +246,4 @@ export const Header: React.FC<HeaderProps> = ({
       )}
     </header>
   );
-}; 
+};
