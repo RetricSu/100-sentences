@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useSpeech } from "./hooks/useSpeech";
 import { useDictionary } from "./hooks/useDictionary";
 import {
@@ -10,40 +10,20 @@ import { Header } from "./components/Header";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { DictionaryEntry } from "./types/index";
 import { defaultText } from "./data/const";
+import { TextProcessor } from "./services/textProcessor";
 
 function App() {
-  const [displayText, setDisplayText] = useState(defaultText);
-  const [processedHtml, setProcessedHtml] = useState("");
   const [showSettings, setShowSettings] = useState(false);
 
   // Dictionary popup state
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
-  const [dictionaryData, setDictionaryData] = useState<DictionaryEntry | null>(
-    null
-  );
+  const [dictionaryData, setDictionaryData] = useState<DictionaryEntry | null>(null);
 
-  // Local sentence state
-  const [localSentences, setLocalSentences] = useState<string[]>([]);
-  const [localCurrentSentenceIndex, setLocalCurrentSentenceIndex] = useState(0);
+  // Speech hook - single source of truth for text and speech state
+  const speech = useSpeech();
 
-  const {
-    voices,
-    selectedVoice,
-    rate,
-    isSupported,
-    isSpeaking,
-    setSelectedVoice,
-    setRate,
-    speak,
-    speakAll,
-    stop,
-    // Enhanced sentence-based functionality
-    currentSentenceIndex,
-    updateSentences,
-    jumpToSentence,
-  } = useSpeech();
-
+  // Dictionary hook
   const {
     lookupWord,
     loading: dictionaryLoading,
@@ -54,6 +34,7 @@ function App() {
     isLoading: isDictionaryLoading,
   } = useDictionary();
 
+  // Local storage hook
   const {
     savedTexts: storedTexts,
     loading: savedTextsLoading,
@@ -62,118 +43,34 @@ function App() {
     clearAllTexts,
   } = useLocalStorage();
 
-  // Process sentences separately
-  const processSentences = useCallback((text: string) => {
-    if (!text.trim()) return [];
+  // Generate processed HTML when speech state changes
+  const processedHtml = useMemo(() => {
+    if (!speech.originalText.trim()) return "";
+    
+    return TextProcessor.processTextToHTML(speech.originalText, {
+      currentSentenceIndex: speech.currentSentenceIndex,
+      isSpeaking: speech.isSpeaking,
+    });
+  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking]);
 
-    const rawSentences = text
-      .split(/(?<=[.!?])\s+/)
-      .filter((s) => s.trim().length > 0);
-
-    return rawSentences
-      .map((sentence) => {
-        const trimmed = sentence.trim();
-        if (trimmed && !trimmed.match(/[.!?]$/)) {
-          return trimmed + ".";
-        }
-        return trimmed;
-      })
-      .filter((s) => s.length > 0);
-  }, []);
-
-  // Process text into clickable words with sentence highlighting and paragraph spacing
-  const processText = useCallback(
-    (text: string) => {
-      if (!text.trim()) return "";
-
-      // Process all sentences using the same logic as useSpeech hook for consistent indexing
-      const allSentences = processSentences(text);
-
-      // Create a mapping of sentence text to global index
-      const sentenceToIndexMap = new Map<string, number>();
-      allSentences.forEach((sentence, index) => {
-        sentenceToIndexMap.set(sentence.trim(), index);
-      });
-
-      // Split into paragraphs for visual layout
-      const paragraphs = text
-        .split(/\n\s*\n/)
-        .filter((p) => p.trim().length > 0);
-
-      return paragraphs
-        .map((paragraph, paragraphIndex) => {
-          // Split each paragraph into sentences using the same logic
-          const paragraphSentences = processSentences(paragraph);
-
-          const processedSentences = paragraphSentences
-            .map((sentence) => {
-              const words = sentence.trim().split(/\s+/);
-              const processedWords = words
-                .map(
-                  (word) =>
-                    `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`
-                )
-                .join(" ");
-
-              // Get the global index for this sentence
-              const globalIndex = sentenceToIndexMap.get(sentence.trim()) || 0;
-
-              // Highlight current sentence, but avoid default highlighting of sentence 0
-              const isCurrentSentence =
-                globalIndex === localCurrentSentenceIndex && 
-                !(localCurrentSentenceIndex === 0 && !isSpeaking);
-              const sentenceClass = isCurrentSentence
-                ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 my-2 rounded-r-lg shadow-sm"
-                : "sentence py-1 my-1 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors";
-
-              const sentenceDiv = `<div class="${sentenceClass}" data-sentence-index="${globalIndex}">${processedWords}</div>`;
-              return sentenceDiv;
-            })
-            .join("");
-
-          // Wrap each paragraph with spacing
-          const paragraphClass =
-            paragraphIndex === 0
-              ? "paragraph-block mb-8 first:mb-8"
-              : "paragraph-block mb-8 pt-4 border-t border-gray-100";
-
-          return `<div class="${paragraphClass}">${processedSentences}</div>`;
-        })
-        .join("");
-    },
-    [localCurrentSentenceIndex, processSentences]
-  );
-
-  // Handle text updates from SettingsPanel
+  // Handle text updates
   const handleTextUpdate = useCallback((text: string) => {
-    setDisplayText(text);
+    speech.setText(text);
+  }, [speech]);
 
-    // Process text for display
-    const processedText = processText(text);
-    setProcessedHtml(processedText);
-
-    // Update local sentences
-    const newSentences = processSentences(text);
-    setLocalSentences(newSentences);
-    setLocalCurrentSentenceIndex(0);
-
-    // Update sentences in speech hook
-    updateSentences(text);
-  }, [processText, processSentences, updateSentences]);
-
-  // Handle word clicks and sentence clicks
+  // Handle word clicks
   const handleWordClick = useCallback(
     async (event: React.MouseEvent) => {
       const target = event.target as HTMLElement;
 
-      // Handle word clicks first (priority over sentence clicks)
       if (target.classList.contains("word")) {
-        const word = target.textContent?.replace(/[^A-Za-z']/g, "") || "";
+        const word = TextProcessor.extractCleanWord(target.textContent || "");
         if (!word) return;
 
-        speak(word);
+        // Speak the word
+        speech.speak(word);
 
-        // Show popup immediately
+        // Show dictionary popup
         setCurrentWord(word);
         setDictionaryVisible(true);
         setDictionaryData(null);
@@ -185,39 +82,50 @@ function App() {
         } catch (error) {
           console.error("Error looking up word:", error);
         }
-        return; // Important: return early to prevent sentence click
       }
+    },
+    [speech, lookupWord]
+  );
 
-      // Handle sentence clicks (only if not clicking on a word)
-      // Check for both regular sentences and currently selected sentences
+  // Handle sentence clicks
+  const handleSentenceClick = useCallback(
+    (event: React.MouseEvent) => {
+      const target = event.target as HTMLElement;
+
+      // Only handle sentence clicks if not clicking on a word
+      if (target.classList.contains("word")) return;
+
       const sentenceDiv = target.closest(".sentence, .current-sentence");
-      if (sentenceDiv && (sentenceDiv.classList.contains("sentence") || sentenceDiv.classList.contains("current-sentence"))) {
+      if (sentenceDiv) {
         const sentenceIndex = parseInt(
           sentenceDiv.getAttribute("data-sentence-index") || "0"
         );
-        if (sentenceIndex >= 0 && sentenceIndex < localSentences.length) {
-          // If currently reading all, stop it first
-          if (isSpeaking) {
-            stop();
-            // Small delay to ensure stop takes effect
-            setTimeout(() => {
-              // Update both local and hook sentence indices
-              setLocalCurrentSentenceIndex(sentenceIndex);
-              jumpToSentence(sentenceIndex);
-              
-              // Speak the selected sentence
-              speak(localSentences[sentenceIndex], sentenceIndex);
-            }, 100);
-          } else {
-            // Not currently speaking, can proceed immediately
-            setLocalCurrentSentenceIndex(sentenceIndex);
-            jumpToSentence(sentenceIndex);
-            speak(localSentences[sentenceIndex], sentenceIndex);
+        
+        if (sentenceIndex >= 0 && sentenceIndex < speech.sentences.length) {
+          // Stop current speech if speaking
+          if (speech.isSpeaking) {
+            speech.stop();
           }
+          
+          // Navigate to sentence and speak it
+          speech.jumpToSentence(sentenceIndex);
+          // Small delay to ensure stop takes effect
+          setTimeout(() => {
+            speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+          }, 100);
         }
       }
     },
-    [speak, lookupWord, jumpToSentence, localSentences, isSpeaking, stop]
+    [speech]
+  );
+
+  // Combined click handler
+  const handleClick = useCallback(
+    (event: React.MouseEvent) => {
+      handleWordClick(event);
+      handleSentenceClick(event);
+    },
+    [handleWordClick, handleSentenceClick]
   );
 
   // Close dictionary popup
@@ -227,15 +135,17 @@ function App() {
     setDictionaryData(null);
   }, []);
 
-  // Handle saving text from SettingsPanel
-  const handleSaveText = useCallback((text: string, title?: string) => {
-    saveText(text, title);
-  }, [saveText]);
+  // Handle saving text
+  const handleSaveText = useCallback(
+    (text: string, title?: string) => {
+      saveText(text, title);
+    },
+    [saveText]
+  );
 
   // Load saved text
   const handleLoadText = useCallback(
     (savedText: SavedTextType) => {
-      // Update display text and process it
       handleTextUpdate(savedText.content);
     },
     [handleTextUpdate]
@@ -262,40 +172,35 @@ function App() {
     }
   }, [clearAllTexts]);
 
-  // Header callback functions
-  const handleSentenceNavigate = useCallback((index: number) => {
-    // If currently reading all, stop it first
-    if (isSpeaking) {
-      stop();
-    }
-    
-    setLocalCurrentSentenceIndex(index);
-    jumpToSentence(index);
-  }, [jumpToSentence, isSpeaking, stop]);
+  // Header control handlers
+  const handleSentenceNavigate = useCallback(
+    (index: number) => {
+      if (speech.isSpeaking) {
+        speech.stop();
+      }
+      speech.jumpToSentence(index);
+    },
+    [speech]
+  );
 
   const handleSpeakCurrentSentence = useCallback(() => {
-    if (localSentences.length > 0 && localCurrentSentenceIndex < localSentences.length) {
-      // If currently reading all, stop it first
-      if (isSpeaking) {
-        stop();
-        // Small delay to ensure stop takes effect
-        setTimeout(() => {
-          speak(localSentences[localCurrentSentenceIndex], localCurrentSentenceIndex);
-        }, 100);
-      } else {
-        // Not currently speaking, can proceed immediately
-        speak(localSentences[localCurrentSentenceIndex], localCurrentSentenceIndex);
-      }
+    if (speech.isSpeaking) {
+      speech.stop();
+      setTimeout(() => {
+        speech.speakCurrentSentence();
+      }, 100);
+    } else {
+      speech.speakCurrentSentence();
     }
-  }, [localSentences, localCurrentSentenceIndex, speak, isSpeaking, stop]);
+  }, [speech]);
 
   const handleToggleReading = useCallback(() => {
-    if (isSpeaking) {
-      stop();
+    if (speech.isSpeaking) {
+      speech.stop();
     } else {
-      speakAll(displayText, localCurrentSentenceIndex);
+      speech.speakAll(speech.currentSentenceIndex);
     }
-  }, [isSpeaking, stop, speakAll, displayText, localCurrentSentenceIndex]);
+  }, [speech]);
 
   const handleToggleSettings = useCallback(() => {
     setShowSettings(!showSettings);
@@ -303,52 +208,21 @@ function App() {
 
   // Auto-load latest saved text on app initialization
   useEffect(() => {
-    if (!savedTextsLoading && storedTexts.length > 0 && !displayText.trim()) {
-      // Only load if no text is currently displayed
+    if (!savedTextsLoading && storedTexts.length > 0 && !speech.originalText.trim()) {
       const latestText = storedTexts[0];
       console.log('Auto-loading latest saved text:', latestText.title);
-      
       handleTextUpdate(latestText.content);
     }
-  }, [savedTextsLoading, storedTexts.length, handleTextUpdate, displayText]);
+  }, [savedTextsLoading, storedTexts.length, handleTextUpdate, speech.originalText]);
 
-  // Initialize processed text and sentences
+  // Initialize with default text if no saved texts
   useEffect(() => {
-    if (displayText.trim()) {
-      // Update local sentences
-      const newSentences = processSentences(displayText);
-      setLocalSentences(newSentences);
-      
-      // Only reset sentence index if we're not currently speaking
-      if (!isSpeaking) {
-        setLocalCurrentSentenceIndex(0);
-        // Update sentences in speech hook only when not speaking
-        updateSentences(displayText);
-      }
+    if (!savedTextsLoading && storedTexts.length === 0 && !speech.originalText.trim()) {
+      handleTextUpdate(defaultText);
     }
-  }, [displayText, processSentences, updateSentences, isSpeaking]);
+  }, [savedTextsLoading, storedTexts.length, handleTextUpdate, speech.originalText]);
 
-  // Update processed HTML when current sentence changes or display text changes
-  useEffect(() => {
-    if (displayText.trim()) {
-      const processedText = processText(displayText);
-      setProcessedHtml(processedText);
-    }
-  }, [localCurrentSentenceIndex, displayText, processText]);
-
-  // Sync local sentence index with hook sentence index (only when hook changes during reading)
-  useEffect(() => {
-    if (currentSentenceIndex !== localCurrentSentenceIndex && isSpeaking) {
-      // Use requestAnimationFrame to ensure smooth updates
-      const rafId = requestAnimationFrame(() => {
-        setLocalCurrentSentenceIndex(currentSentenceIndex);
-      });
-      
-      return () => cancelAnimationFrame(rafId);
-    }
-  }, [currentSentenceIndex, localCurrentSentenceIndex, isSpeaking]);
-
-  if (!isSupported) {
+  if (!speech.isSupported) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
         <div className="text-center p-8 bg-white rounded-xl shadow-lg border border-red-200 max-w-md mx-4">
@@ -373,12 +247,12 @@ function App() {
         dictionarySize={dictionarySize}
         isDictionaryLoading={isDictionaryLoading}
         loadingProgress={loadingProgress}
-        localSentences={localSentences}
-        localCurrentSentenceIndex={localCurrentSentenceIndex}
+        sentences={speech.sentences}
+        currentSentenceIndex={speech.currentSentenceIndex}
         onSentenceNavigate={handleSentenceNavigate}
         onSpeakCurrentSentence={handleSpeakCurrentSentence}
-        isSpeaking={isSpeaking}
-        displayText={displayText}
+        isSpeaking={speech.isSpeaking}
+        hasText={speech.originalText.trim().length > 0}
         onToggleReading={handleToggleReading}
         onToggleSettings={handleToggleSettings}
       />
@@ -393,18 +267,18 @@ function App() {
           <SettingsPanel
             onTextUpdate={handleTextUpdate}
             defaultText={defaultText}
-            displayText={displayText}
+            displayText={speech.originalText}
             savedTexts={storedTexts}
             savedTextsLoading={savedTextsLoading}
             onLoadText={handleLoadText}
             onDeleteText={handleDeleteText}
             onClearAllTexts={handleClearAllTexts}
             onSaveText={handleSaveText}
-            voices={voices}
-            selectedVoice={selectedVoice}
-            onVoiceChange={setSelectedVoice}
-            rate={rate}
-            onRateChange={setRate}
+            voices={speech.voices}
+            selectedVoice={speech.selectedVoice}
+            onVoiceChange={speech.setSelectedVoice}
+            rate={speech.rate}
+            onRateChange={speech.setRate}
           />
         </div>
 
@@ -412,7 +286,7 @@ function App() {
         <div className="flex-1 min-w-0">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
             <div
-              onClick={handleWordClick}
+              onClick={handleClick}
               dangerouslySetInnerHTML={{
                 __html: processedHtml,
               }}
@@ -444,7 +318,7 @@ function App() {
         error={dictionaryError}
         isVisible={dictionaryVisible}
         onClose={closeDictionary}
-        onSpeak={speak}
+        onSpeak={speech.speak}
       />
     </div>
   );

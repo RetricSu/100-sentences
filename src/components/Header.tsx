@@ -8,14 +8,14 @@ interface HeaderProps {
   loadingProgress: number;
 
   // Sentence navigation
-  localSentences: string[];
-  localCurrentSentenceIndex: number;
+  sentences: string[];
+  currentSentenceIndex: number;
   onSentenceNavigate: (index: number) => void;
   onSpeakCurrentSentence: () => void;
 
   // Reading controls
   isSpeaking: boolean;
-  displayText: string;
+  hasText: boolean;
   onToggleReading: () => void;
 
   // Settings
@@ -27,24 +27,24 @@ export const Header: React.FC<HeaderProps> = ({
   dictionarySize,
   isDictionaryLoading,
   loadingProgress,
-  localSentences,
-  localCurrentSentenceIndex,
+  sentences,
+  currentSentenceIndex,
   onSentenceNavigate,
   onSpeakCurrentSentence,
   isSpeaking,
-  displayText,
+  hasText,
   onToggleReading,
   onToggleSettings,
 }) => {
   const handlePreviousSentence = () => {
-    if (localCurrentSentenceIndex > 0) {
-      onSentenceNavigate(localCurrentSentenceIndex - 1);
+    if (currentSentenceIndex > 0) {
+      onSentenceNavigate(currentSentenceIndex - 1);
     }
   };
 
   const handleNextSentence = () => {
-    if (localCurrentSentenceIndex < localSentences.length - 1) {
-      onSentenceNavigate(localCurrentSentenceIndex + 1);
+    if (currentSentenceIndex < sentences.length - 1) {
+      onSentenceNavigate(currentSentenceIndex + 1);
     }
   };
 
@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Read All Button */}
           <button
             onClick={handleStartReading}
-            disabled={!displayText.trim() || isSpeaking}
+            disabled={!hasText || isSpeaking}
             className="px-4 py-2 bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors duration-200 flex items-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-lg"
             title="Read all text"
           >
@@ -119,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center bg-white rounded-lg shadow-sm border border-gray-200">
             <button
               onClick={handlePreviousSentence}
-              disabled={localCurrentSentenceIndex === 0 || isSpeaking}
+              disabled={currentSentenceIndex === 0 || isSpeaking}
               className="p-2 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-l-lg"
               title="Previous sentence"
             >
@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={onSpeakCurrentSentence}
-              disabled={localSentences.length === 0 || isSpeaking}
+              disabled={sentences.length === 0 || isSpeaking}
               className="px-3 py-2 bg-green-500 text-white font-medium hover:bg-green-600 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-1"
               title="Speak current sentence"
             >
@@ -163,7 +163,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={handleNextSentence}
               disabled={
-                localCurrentSentenceIndex >= localSentences.length - 1 ||
+                currentSentenceIndex >= sentences.length - 1 ||
                 isSpeaking
               }
               className="p-2 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -185,8 +185,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <div className="px-3 py-2 bg-gray-50 text-xs font-medium text-gray-500 rounded-r-lg border-l border-gray-200">
-              {localSentences.length > 0
-                ? `${localCurrentSentenceIndex + 1}/${localSentences.length}`
+              {sentences.length > 0
+                ? `${currentSentenceIndex + 1}/${sentences.length}`
                 : "0/0"}
             </div>
           </div>

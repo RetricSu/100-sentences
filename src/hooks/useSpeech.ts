@@ -2,38 +2,85 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import useLocalStorageState from 'use-local-storage-state';
 import { VoiceOption } from '../types/index';
 
-export const useSpeech = () => {
-  const [voices, setVoices] = useState<VoiceOption[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
-  const [rate, setRate] = useLocalStorageState('tts-rate', { defaultValue: 0.9 });
-  const [isSupported, setIsSupported] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+interface SpeechState {
+  // Text and sentence management
+  originalText: string;
+  sentences: string[];
+  currentSentenceIndex: number;
   
-  // Store voice selection in localStorage using name and language
+  // Speech status
+  isSpeaking: boolean;
+  isPlayingSequence: boolean;
+  
+  // Voice settings
+  selectedVoice: SpeechSynthesisVoice | null;
+  rate: number;
+  
+  // System status
+  isSupported: boolean;
+  voices: VoiceOption[];
+}
+
+export const useSpeech = () => {
+  // Core state
+  const [state, setState] = useState<SpeechState>({
+    originalText: '',
+    sentences: [],
+    currentSentenceIndex: 0,
+    isSpeaking: false,
+    isPlayingSequence: false,
+    selectedVoice: null,
+    rate: 0.9,
+    isSupported: false,
+    voices: [],
+  });
+
+  // Persistent storage for voice settings
+  const [rate, setRate] = useLocalStorageState('tts-rate', { defaultValue: 0.9 });
   const [savedVoiceInfo, setSavedVoiceInfo] = useLocalStorageState<{name: string, lang: string} | null>('tts-voice', { defaultValue: null });
   
-  // Enhanced sentence-based playback state
-  const [sentences, setSentences] = useState<string[]>([]);
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-  const [isPlayingSequence, setIsPlayingSequence] = useState(false);
-  
-  // Add refs to track speech state and cleanup
+  // Refs for speech management
   const speakingRef = useRef(false);
   const timeoutRef = useRef<number | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const sequenceRef = useRef<{ isCancelled: boolean; startIndex: number }>({ isCancelled: false, startIndex: 0 });
   
-  // Refs to always use latest voice and rate values
+  // Refs to always use latest values in speech callbacks
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const rateRef = useRef<number>(0.9);
 
+  // Text processing utility
+  const processSentences = useCallback((text: string): string[] => {
+    if (!text.trim()) return [];
+    
+    const rawSentences = text
+      .split(/(?<=[.!?])\s+/)
+      .filter(s => s.trim().length > 0);
+    
+    return rawSentences
+      .map(sentence => {
+        const trimmed = sentence.trim();
+        if (trimmed && !trimmed.match(/[.!?]$/)) {
+          return trimmed + '.';
+        }
+        return trimmed;
+      })
+      .filter(s => s.length > 0);
+  }, []);
+
+  // Update state helper
+  const updateState = useCallback((updates: Partial<SpeechState>) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  // Initialize speech synthesis
   useEffect(() => {
     if (!('speechSynthesis' in window)) {
       console.warn('Speech synthesis not supported');
       return;
     }
 
-    setIsSupported(true);
+    updateState({ isSupported: true });
     
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
@@ -41,7 +88,7 @@ export const useSpeech = () => {
         .filter(voice => voice.lang.startsWith('en'))
         .map((voice, index) => ({ voice, index }));
       
-      setVoices(englishVoices);
+      updateState({ voices: englishVoices });
 
       // Try to restore saved voice first
       if (savedVoiceInfo) {
@@ -49,12 +96,12 @@ export const useSpeech = () => {
           v.voice.name === savedVoiceInfo.name && v.voice.lang === savedVoiceInfo.lang
         )?.voice;
         if (savedVoice) {
-          setSelectedVoice(savedVoice);
+          updateState({ selectedVoice: savedVoice });
           return;
         }
       }
 
-      // Auto-select best voice if no saved voice or saved voice not found
+      // Auto-select best voice
       const bestVoice = englishVoices.find(v => 
         v.voice.lang === 'en-US' && v.voice.name.includes('Microsoft')
       )?.voice ||
@@ -73,7 +120,7 @@ export const useSpeech = () => {
       englishVoices[0]?.voice;
 
       if (bestVoice) {
-        setSelectedVoice(bestVoice);
+        updateState({ selectedVoice: bestVoice });
       }
     };
 
@@ -83,71 +130,53 @@ export const useSpeech = () => {
     return () => {
       window.speechSynthesis.onvoiceschanged = null;
     };
-  }, [savedVoiceInfo]);
+  }, [savedVoiceInfo, updateState]);
 
-  // Custom setSelectedVoice function that also saves to localStorage
-  const setSelectedVoiceWithStorage = useCallback((voice: SpeechSynthesisVoice) => {
-    setSelectedVoice(voice);
-    setSavedVoiceInfo({ name: voice.name, lang: voice.lang });
-  }, [setSavedVoiceInfo]);
-
-  // Keep refs synchronized with state
+  // Sync rate with localStorage
   useEffect(() => {
-    selectedVoiceRef.current = selectedVoice;
-  }, [selectedVoice]);
-
-  useEffect(() => {
+    updateState({ rate });
     rateRef.current = rate;
-  }, [rate]);
+  }, [rate, updateState]);
 
-  // Add effect to sync isSpeaking state with speech synthesis
+  // Keep refs synchronized
   useEffect(() => {
+    selectedVoiceRef.current = state.selectedVoice;
+  }, [state.selectedVoice]);
+
+  // Sync isSpeaking state with speech synthesis
+  useEffect(() => {
+    if (!state.isSupported) return;
+    
     const interval = setInterval(() => {
-      if (isSupported) {
-        const synthesisSpeaking = window.speechSynthesis.speaking;
-        if (speakingRef.current !== synthesisSpeaking) {
-          speakingRef.current = synthesisSpeaking;
-          setIsSpeaking(synthesisSpeaking);
-        }
+      const synthesisSpeaking = window.speechSynthesis.speaking;
+      if (speakingRef.current !== synthesisSpeaking) {
+        speakingRef.current = synthesisSpeaking;
+        updateState({ isSpeaking: synthesisSpeaking });
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isSupported]);
+  }, [state.isSupported, updateState]);
 
-  // Enhanced text processing to split into sentences
-  const processSentences = useCallback((text: string) => {
-    if (!text.trim()) return [];
-    
-    // Split by sentences with better regex that handles abbreviations
-    const rawSentences = text.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
-    
-    // Clean up sentences and ensure they end with punctuation
-    const processedSentences = rawSentences.map(sentence => {
-      const trimmed = sentence.trim();
-      if (trimmed && !trimmed.match(/[.!?]$/)) {
-        return trimmed + '.';
-      }
-      return trimmed;
-    }).filter(s => s.length > 0);
-    
-    return processedSentences;
-  }, []);
+  // Main text setter - this is the primary way to update text
+  const setText = useCallback((text: string) => {
+    const sentences = processSentences(text);
+    updateState({
+      originalText: text,
+      sentences,
+      currentSentenceIndex: 0,
+    });
+  }, [processSentences, updateState]);
 
-  // Update sentences when text changes
-  const updateSentences = useCallback((text: string) => {
-    const newSentences = processSentences(text);
-    setSentences(newSentences);
-    // Only reset sentence index if we're not currently speaking
-    if (!isSpeaking && !isPlayingSequence) {
-      setCurrentSentenceIndex(0);
-    }
-    return newSentences;
-  }, [processSentences, isSpeaking, isPlayingSequence]);
+  // Voice selection with storage
+  const setSelectedVoice = useCallback((voice: SpeechSynthesisVoice) => {
+    updateState({ selectedVoice: voice });
+    setSavedVoiceInfo({ name: voice.name, lang: voice.lang });
+  }, [updateState, setSavedVoiceInfo]);
 
-  // Enhanced speak function to handle sentence context
+  // Core speak function
   const speak = useCallback((text: string, sentenceIndex?: number) => {
-    if (!isSupported || !selectedVoiceRef.current) {
+    if (!state.isSupported || !selectedVoiceRef.current) {
       console.warn('Speech synthesis not available');
       return;
     }
@@ -161,7 +190,7 @@ export const useSpeech = () => {
 
     // Update current sentence index if provided
     if (sentenceIndex !== undefined) {
-      setCurrentSentenceIndex(sentenceIndex);
+      updateState({ currentSentenceIndex: sentenceIndex });
     }
     
     const utterance = new SpeechSynthesisUtterance(text);
@@ -172,106 +201,86 @@ export const useSpeech = () => {
     
     utterance.onstart = () => {
       speakingRef.current = true;
-      setIsSpeaking(true);
+      updateState({ isSpeaking: true });
     };
     
     utterance.onend = () => {
       speakingRef.current = false;
-      setIsSpeaking(false);
+      updateState({ isSpeaking: false });
       currentUtteranceRef.current = null;
     };
     
     utterance.onerror = (event) => {
       console.error('Speech synthesis error:', event.error);
       speakingRef.current = false;
-      setIsSpeaking(false);
+      updateState({ isSpeaking: false });
       currentUtteranceRef.current = null;
     };
     
     currentUtteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [isSupported]);
+  }, [state.isSupported, updateState]);
+
+  // Navigation functions
+  const jumpToSentence = useCallback((index: number) => {
+    if (index >= 0 && index < state.sentences.length) {
+      updateState({ currentSentenceIndex: index });
+    }
+  }, [state.sentences.length, updateState]);
+
+  const nextSentence = useCallback(() => {
+    if (state.currentSentenceIndex < state.sentences.length - 1) {
+      const nextIndex = state.currentSentenceIndex + 1;
+      updateState({ currentSentenceIndex: nextIndex });
+    }
+  }, [state.currentSentenceIndex, state.sentences.length, updateState]);
+
+  const previousSentence = useCallback(() => {
+    if (state.currentSentenceIndex > 0) {
+      const prevIndex = state.currentSentenceIndex - 1;
+      updateState({ currentSentenceIndex: prevIndex });
+    }
+  }, [state.currentSentenceIndex, updateState]);
 
   // Speak current sentence
   const speakCurrentSentence = useCallback(() => {
-    if (sentences.length > 0 && currentSentenceIndex < sentences.length) {
-      speak(sentences[currentSentenceIndex], currentSentenceIndex);
+    if (state.sentences.length > 0 && state.currentSentenceIndex < state.sentences.length) {
+      speak(state.sentences[state.currentSentenceIndex], state.currentSentenceIndex);
     }
-  }, [sentences, currentSentenceIndex, speak]);
+  }, [state.sentences, state.currentSentenceIndex, speak]);
 
-  // Navigate to next sentence
-  const nextSentence = useCallback(() => {
-    if (currentSentenceIndex < sentences.length - 1) {
-      const nextIndex = currentSentenceIndex + 1;
-      setCurrentSentenceIndex(nextIndex);
-      if (isSpeaking) {
-        speak(sentences[nextIndex], nextIndex);
-      }
-    }
-  }, [currentSentenceIndex, sentences, isSpeaking, speak]);
-
-  // Navigate to previous sentence
-  const previousSentence = useCallback(() => {
-    if (currentSentenceIndex > 0) {
-      const prevIndex = currentSentenceIndex - 1;
-      setCurrentSentenceIndex(prevIndex);
-      if (isSpeaking) {
-        speak(sentences[prevIndex], prevIndex);
-      }
-    }
-  }, [currentSentenceIndex, sentences, isSpeaking, speak]);
-
-  // Jump to specific sentence
-  const jumpToSentence = useCallback((index: number) => {
-    if (index >= 0 && index < sentences.length) {
-      setCurrentSentenceIndex(index);
-      if (isSpeaking) {
-        speak(sentences[index], index);
-      }
-    }
-  }, [sentences, isSpeaking, speak]);
-
-  // Enhanced speakAll with sentence sequence control
-  const speakAll = useCallback((text: string, startFromIndex: number = 0) => {
-    if (!isSupported || !selectedVoiceRef.current) {
-      console.warn('Speech synthesis not available');
+  // Speak all sentences from a starting point
+  const speakAll = useCallback((startFromIndex: number = 0) => {
+    if (!state.isSupported || !selectedVoiceRef.current || state.sentences.length === 0) {
+      console.warn('Speech synthesis not available or no sentences');
       return;
     }
 
-    // Clear any existing speech and timeouts
+    // Clear any existing speech
     window.speechSynthesis.cancel();
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-
-    // Process sentences
-    const processedSentences = processSentences(text);
-    
-    if (processedSentences.length === 0) return;
     
     // Reset sequence state
     sequenceRef.current = { isCancelled: false, startIndex: startFromIndex };
-    setIsPlayingSequence(true);
+    updateState({ isPlayingSequence: true });
     
-    // Update sentences state only once at the beginning
-    setSentences(processedSentences);
-    
-    // Use an object to track current index so it can be properly referenced
-    const indexTracker = { current: Math.max(0, Math.min(startFromIndex, processedSentences.length - 1)) };
+    // Use an object to track current index
+    const indexTracker = { current: Math.max(0, Math.min(startFromIndex, state.sentences.length - 1)) };
 
     const speakNext = () => {
-      if (sequenceRef.current.isCancelled || indexTracker.current >= processedSentences.length) {
+      if (sequenceRef.current.isCancelled || indexTracker.current >= state.sentences.length) {
         speakingRef.current = false;
-        setIsSpeaking(false);
-        setIsPlayingSequence(false);
+        updateState({ isSpeaking: false, isPlayingSequence: false });
         currentUtteranceRef.current = null;
         return;
       }
 
-      const sentence = processedSentences[indexTracker.current].trim();
+      const sentence = state.sentences[indexTracker.current].trim();
       if (sentence) {
-        const sentenceIndex = indexTracker.current; // Capture the index for this utterance
+        const sentenceIndex = indexTracker.current;
         const utterance = new SpeechSynthesisUtterance(sentence);
         utterance.voice = selectedVoiceRef.current;
         utterance.lang = selectedVoiceRef.current?.lang || 'en-US';
@@ -281,9 +290,10 @@ export const useSpeech = () => {
         utterance.onstart = () => {
           if (!sequenceRef.current.isCancelled) {
             speakingRef.current = true;
-            setIsSpeaking(true);
-            // Update sentence index only when we actually start speaking
-            setCurrentSentenceIndex(sentenceIndex);
+            updateState({ 
+              isSpeaking: true, 
+              currentSentenceIndex: sentenceIndex 
+            });
           }
         };
         
@@ -297,8 +307,7 @@ export const useSpeech = () => {
         utterance.onerror = (event) => {
           console.error('Speech synthesis error:', event.error);
           speakingRef.current = false;
-          setIsSpeaking(false);
-          setIsPlayingSequence(false);
+          updateState({ isSpeaking: false, isPlayingSequence: false });
           currentUtteranceRef.current = null;
         };
 
@@ -310,13 +319,12 @@ export const useSpeech = () => {
       }
     };
 
-    // Start speaking
     speakNext();
-  }, [isSupported, processSentences]);
+  }, [state.isSupported, state.sentences, updateState]);
 
-  // Enhanced stop function
+  // Stop all speech
   const stop = useCallback(() => {
-    if (isSupported) {
+    if (state.isSupported) {
       // Clear all timeouts
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -325,42 +333,47 @@ export const useSpeech = () => {
       
       // Cancel sequence
       sequenceRef.current.isCancelled = true;
-      setIsPlayingSequence(false);
+      updateState({ isPlayingSequence: false });
       
       // Cancel speech synthesis
       window.speechSynthesis.cancel();
       
       // Reset state immediately
       speakingRef.current = false;
-      setIsSpeaking(false);
+      updateState({ isSpeaking: false });
       currentUtteranceRef.current = null;
     }
-  }, [isSupported]);
+  }, [state.isSupported, updateState]);
 
+  // Test voice function
   const testVoice = useCallback(() => {
     speak("Hello! This is a test of the selected voice. How do you like it?");
   }, [speak]);
 
+  // Return the hook interface
   return {
-    voices,
-    selectedVoice,
-    rate,
-    isSupported,
-    isSpeaking,
-    setSelectedVoice: setSelectedVoiceWithStorage,
+    // State
+    originalText: state.originalText,
+    sentences: state.sentences,
+    currentSentenceIndex: state.currentSentenceIndex,
+    isSpeaking: state.isSpeaking,
+    isPlayingSequence: state.isPlayingSequence,
+    isSupported: state.isSupported,
+    voices: state.voices,
+    selectedVoice: state.selectedVoice,
+    rate: state.rate,
+    
+    // Actions
+    setText,
+    setSelectedVoice,
     setRate,
     speak,
+    speakCurrentSentence,
     speakAll,
     stop,
     testVoice,
-    // Enhanced sentence-based functionality
-    sentences,
-    currentSentenceIndex,
-    isPlayingSequence,
-    updateSentences,
-    speakCurrentSentence,
+    jumpToSentence,
     nextSentence,
     previousSentence,
-    jumpToSentence,
   };
 }; 
