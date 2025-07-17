@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDictationStorage } from "../hooks/useDictationStorage";
 import { DictationDisplayUtils } from "../utils/dictationDisplay";
 import { DictationService } from "../services/dictationService";
@@ -21,12 +21,14 @@ export const DictationInput: React.FC<DictationInputProps> = ({
 
 
 
-  // Handle sentence/text changes: reset state and load saved input
+  // Handle sentence/text changes: save and load
   useEffect(() => {
-    // Reset initialization when sentence changes
-    setHasInitialized(false);
+    // Save current text when becoming invisible
+    if (!isVisible && hasInitialized && isLoaded) {
+      saveDictationInput(targetText, sentenceIndex, userInput);
+    }
     
-    // Load saved input when storage is ready and component initializes
+    // Load saved input when becoming visible
     if (isLoaded && isVisible) {
       const savedInput = getDictationInput(targetText, sentenceIndex);
       setUserInput(savedInput);
@@ -37,9 +39,9 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         inputRef.current?.focus();
       }, 100);
     }
-  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput]);
+  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput, saveDictationInput, hasInitialized]);
 
-  // Handle user input changes: debounced saving and completion check
+  // Handle user input changes: immediate display update with debounced saving
   useEffect(() => {
     if (!hasInitialized || !isLoaded) return;
     
@@ -59,14 +61,17 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     
     debounceRef.current = setTimeout(() => {
       saveDictationInput(targetText, sentenceIndex, userInput);
-    }, 300);
+    }, 50);
     
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [userInput, targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, onComplete]);
+  }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, onComplete]);
+
+
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -84,15 +89,13 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     }
   };
 
-
-
   const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
     // Allow all keys for typing
     return;
   };
 
   // Generate display text with word-by-word progression
-  const generateDisplayText = useCallback(() => {
+  const generateDisplayText = () => {
     if (!targetText) return "";
 
     const cursorPosition = DictationService.getNextCharacterPosition(targetText, userInput);
@@ -100,7 +103,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       showCursor: true,
       cursorPosition
     });
-  }, [targetText, userInput]);
+  };
 
   if (!isVisible) return null;
 
