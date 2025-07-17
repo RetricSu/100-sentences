@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useDictationStorage } from "../hooks/useDictationStorage";
 
 interface DictationInputProps {
   targetText: string;
+  sentenceIndex: number;
   isVisible: boolean;
   onComplete?: () => void;
   className?: string;
@@ -9,6 +11,7 @@ interface DictationInputProps {
 
 export const DictationInput: React.FC<DictationInputProps> = ({
   targetText,
+  sentenceIndex,
   isVisible,
   onComplete,
   className = "",
@@ -16,22 +19,61 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   const [userInput, setUserInput] = useState("");
   const [isCompleted, setIsCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
+  const { getDictationInput, saveDictationInput, isLoaded } = useDictationStorage();
 
-  // Reset when target text changes or visibility changes
+  // Helper function to extract clean word without punctuation
+  const extractCleanWord = (word: string): string => {
+    return word.replace(/[^a-zA-Z]/g, '');
+  };
+
+  // Helper function to extract all clean words from text
+  const extractCleanWords = (text: string): string[] => {
+    return text.split(/\s+/).map(word => extractCleanWord(word)).filter(word => word.length > 0);
+  };
+
+  // Get the target words (only the typeable letters)
+  const getTargetWords = (): string[] => {
+    return extractCleanWords(targetText);
+  };
+
+  // Load saved input when storage is ready and component initializes
   useEffect(() => {
-    if (isVisible) {
-      setUserInput("");
-      setIsCompleted(false);
+    if (isLoaded && !hasInitialized && isVisible) {
+      const savedInput = getDictationInput(targetText, sentenceIndex);
+      setUserInput(savedInput);
+      setHasInitialized(true);
+      
       // Focus the input when it becomes visible
       setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
     }
-  }, [targetText, isVisible]);
+  }, [isLoaded, hasInitialized, isVisible, targetText, sentenceIndex, getDictationInput]);
+
+  // Save input whenever it changes
+  useEffect(() => {
+    if (hasInitialized && isLoaded) {
+      saveDictationInput(targetText, sentenceIndex, userInput);
+    }
+  }, [userInput, targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded]);
+
+  // Reset initialization when sentence changes
+  useEffect(() => {
+    setHasInitialized(false);
+  }, [sentenceIndex, targetText]);
 
   // Check if completed
   useEffect(() => {
-    if (userInput === targetText && targetText.length > 0) {
+    const targetWords = getTargetWords();
+    const userWords = userInput.split(/\s+/).filter(word => word.length > 0);
+    
+    // Check if all words match (case-insensitive)
+    const allWordsMatch = targetWords.length === userWords.length && 
+                         targetWords.every((word, index) => word.toLowerCase() === userWords[index]?.toLowerCase());
+    
+    if (allWordsMatch && targetWords.length > 0) {
       setIsCompleted(true);
       onComplete?.();
     } else {
@@ -41,34 +83,32 @@ export const DictationInput: React.FC<DictationInputProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-
-    // Allow any input but validate character by character
-    if (value.length <= targetText.length) {
-      setUserInput(value);
-    }
+    
+    // Only allow letters and spaces
+    const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
+    setUserInput(filteredValue);
   };
 
   // Auto-complete spaces when word is finished
   useEffect(() => {
-    if (!targetText || !userInput) return;
+    if (!userInput.trim()) return;
 
-    const targetWords = targetText.split(/(\s+)/);
-    const userWords = userInput.split(/(\s+)/);
+    const targetWords = getTargetWords();
+    const userWords = userInput.split(/\s+/).filter(word => word.length > 0);
+    
+    if (userWords.length === 0) return;
+    
+    const currentWordIndex = userWords.length - 1;
+    const currentUserWord = userWords[currentWordIndex];
+    const currentTargetWord = targetWords[currentWordIndex];
 
-    // If we've completed a word and the next character should be a space
-    if (userWords.length > 0 && userWords.length < targetWords.length) {
-      const currentWordIndex = userWords.length - 1;
-      const targetWord = targetWords[currentWordIndex];
-      const userWord = userWords[currentWordIndex];
-
-      // If we've completed the current word exactly
-      if (
-        userWord === targetWord &&
-        targetWords[currentWordIndex + 1]?.trim() === ""
-      ) {
-        // Auto-add the space
-        setUserInput(userInput + " ");
-      }
+    // If we've completed the current word exactly and there are more words to type
+    if (currentTargetWord &&
+        currentUserWord.toLowerCase() === currentTargetWord.toLowerCase() &&
+        currentWordIndex < targetWords.length - 1 &&
+        !userInput.endsWith(' ')) {
+      // Auto-add the space
+      setUserInput(userInput + ' ');
     }
   }, [userInput, targetText]);
 
@@ -77,79 +117,102 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     return;
   };
 
-  // Generate display text with colored characters
+  // Generate display text with word-by-word progression
   const generateDisplayText = () => {
     if (!targetText) return "";
 
-    // Split target text into words to handle word-by-word navigation
-    const words = targetText.split(/(\s+)/); // Split by spaces but keep spaces
-    const userWords = userInput.split(/(\s+)/);
+    const result = [];
+    
+    // Create a string of all user letters (no spaces)
+    const userLetters = userInput.replace(/\s+/g, '');
+    
+    // Split original text into tokens (words, spaces, punctuation)
+    const tokens = targetText.split(/(\s+)/);
+    let targetWordIndex = 0;
+    let globalLetterIndex = 0; // Track position in target text (letters only)
 
-    let result = [];
-    let charIndex = 0;
-
-    for (let wordIndex = 0; wordIndex < words.length; wordIndex++) {
-      const targetWord = words[wordIndex];
-      const userWord = userWords[wordIndex] || "";
-
-      if (targetWord.trim() === "") {
-        // This is a space character
-        if (wordIndex < userWords.length) {
-          // Space has been typed correctly
+    for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
+      const token = tokens[tokenIndex];
+      
+      if (token.trim() === '') {
+        // This is whitespace - always show as space
+        result.push(
+          <span key={tokenIndex} className="inline-block">
+            {'\u00A0'}
+          </span>
+        );
+      } else {
+        // This is a word (potentially with punctuation)
+        const cleanWord = extractCleanWord(token);
+        
+        if (cleanWord.length === 0) {
+          // This token has no letters (pure punctuation) - show as-is in gray
           result.push(
-            <span key={charIndex} className="inline-block text-green-600">
-              {"\u00A0"}
+            <span key={tokenIndex} className="inline-block text-gray-700">
+              {token}
             </span>
           );
         } else {
-          // Space not yet typed
-          result.push(
-            <span key={charIndex} className="inline-block text-gray-400">
-              {"\u00A0"}
-            </span>
-          );
-        }
-        charIndex += targetWord.length;
-      } else {
-        // This is a word
-        const wordChars = targetWord.split("");
-        const userWordChars = userWord.split("");
-
-        for (let i = 0; i < wordChars.length; i++) {
-          const char = wordChars[i];
-          const userChar = userWordChars[i];
-
-          let className = "inline-block";
-
-          if (i < userWordChars.length) {
-            // Character has been typed
-            if (userChar === char) {
-              className += " text-green-600"; // Correct
+          // This token has letters - process character by character
+          let charResult = [];
+          
+          for (let charIndex = 0; charIndex < token.length; charIndex++) {
+            const char = token[charIndex];
+            
+            if (/[a-zA-Z]/.test(char)) {
+              // This is a letter
+              const userChar = userLetters[globalLetterIndex];
+              let className = "inline-block";
+              
+              if (globalLetterIndex < userLetters.length) {
+                // Character has been typed
+                if (userChar && userChar.toLowerCase() === char.toLowerCase()) {
+                  className += " text-green-600"; // Correct
+                } else {
+                  className += " text-red-600"; // Wrong
+                }
+                charResult.push(
+                  <span key={`${tokenIndex}-${charIndex}`} className={className}>
+                    {userChar}
+                  </span>
+                );
+              } else if (globalLetterIndex === userLetters.length) {
+                // This is the next character to type - show cursor
+                className += " text-gray-800 bg-blue-100 animate-pulse";
+                charResult.push(
+                  <span key={`${tokenIndex}-${charIndex}`} className={className}>
+                    _
+                  </span>
+                );
+              } else {
+                // Future character - show as underscore
+                className += " text-gray-400";
+                charResult.push(
+                  <span key={`${tokenIndex}-${charIndex}`} className={className}>
+                    _
+                  </span>
+                );
+              }
+              
+              globalLetterIndex++;
             } else {
-              className += " text-red-600"; // Wrong
+              // This is punctuation within the word - always show as-is in gray
+              charResult.push(
+                <span key={`${tokenIndex}-${charIndex}`} className="inline-block text-gray-700">
+                  {char}
+                </span>
+              );
             }
-          } else if (
-            i === userWordChars.length &&
-            wordIndex === userWords.length - 1
-          ) {
-            // Current character to type (only for the current word)
-            className += " text-gray-800 bg-blue-100 animate-pulse";
-          } else {
-            // Not yet typed - show as underscore
-            className += " text-gray-400";
           }
-
+          
           result.push(
-            <span key={charIndex + i} className={className}>
-              {i < userWordChars.length
-                ? userChar === char
-                  ? char
-                  : userChar
-                : "_"}
+            <span key={tokenIndex}>
+              {charResult}
             </span>
           );
+          
+          targetWordIndex++;
         }
-        charIndex += wordChars.length;
       }
     }
 
@@ -179,6 +242,13 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       >
         {generateDisplayText()}
       </div>
+
+      {/* Progress indicator */}
+      {isCompleted && (
+        <div className="mt-2 text-sm text-green-600 font-medium">
+          ✓ Completed!
+        </div>
+      )}
     </div>
   );
 };

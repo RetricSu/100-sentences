@@ -31,6 +31,7 @@ interface SettingsPanelProps {
   // Speed settings
   rate: number;
   onRateChange: (rate: number) => void;
+  onClearDictationInputs: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -48,6 +49,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onVoiceChange,
   rate,
   onRateChange,
+  onClearDictationInputs,
 }) => {
   // Internal state management
   const [inputText, setInputText] = useState("");
@@ -234,6 +236,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <span>1.0x (Normal)</span>
           <span>2.0x (Fast)</span>
         </div>
+      </div>
+
+      {/* Dictation Management Section */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-gray-700">
+          Dictation Management
+        </label>
+        
+        <button
+          onClick={onClearDictationInputs}
+          className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors font-medium"
+          title="Clear all dictation progress"
+        >
+          🗑️ Clear Dictation Progress
+        </button>
+        
+        <p className="text-xs text-gray-500">
+          This will remove all saved dictation inputs for all sentences.
+        </p>
       </div>
     </div>
   );

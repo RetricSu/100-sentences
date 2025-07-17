@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { createRoot } from "react-dom/client";
 import { useSpeech } from "./hooks/useSpeech";
 import { useDictionary } from "./hooks/useDictionary";
+import { useDictationStorage } from "./hooks/useDictationStorage";
 import {
   useLocalStorage,
   SavedText as SavedTextType,
@@ -48,6 +49,9 @@ function App() {
     deleteText,
     clearAllTexts,
   } = useLocalStorage();
+
+  // Dictation storage hook
+  const { clearAllDictationInputs } = useDictationStorage();
 
   // Generate processed HTML when speech state changes
   const processedHtml = useMemo(() => {
@@ -196,6 +200,17 @@ function App() {
     }
   }, [clearAllTexts]);
 
+  // Clear all dictation inputs
+  const handleClearDictationInputs = useCallback(() => {
+    if (
+      confirm(
+        "Are you sure you want to clear all dictation progress? This action cannot be undone."
+      )
+    ) {
+      clearAllDictationInputs();
+    }
+  }, [clearAllDictationInputs]);
+
   // Header control handlers
   const handleSentenceNavigate = useCallback(
     (index: number) => {
@@ -265,6 +280,7 @@ function App() {
         root.render(
           <DictationInput
             targetText={speech.sentences[dictationSentenceIndex]}
+            sentenceIndex={dictationSentenceIndex}
             isVisible={true}
             onComplete={handleDictationComplete}
             className=""
@@ -357,6 +373,7 @@ function App() {
             onVoiceChange={speech.setSelectedVoice}
             rate={speech.rate}
             onRateChange={speech.setRate}
+            onClearDictationInputs={handleClearDictationInputs}
           />
         </div>
 
