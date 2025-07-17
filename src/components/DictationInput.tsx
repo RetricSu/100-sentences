@@ -21,14 +21,8 @@ export const DictationInput: React.FC<DictationInputProps> = ({
 
 
 
-  // Handle sentence/text changes: save and load
+  // Handle sentence/text changes: load saved input
   useEffect(() => {
-    // Save current text when becoming invisible
-    if (!isVisible && hasInitialized && isLoaded) {
-      saveDictationInput(targetText, sentenceIndex, userInput);
-    }
-    
-    // Load saved input when becoming visible
     if (isLoaded && isVisible) {
       const savedInput = getDictationInput(targetText, sentenceIndex);
       setUserInput(savedInput);
@@ -39,7 +33,17 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         inputRef.current?.focus();
       }, 100);
     }
-  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput, saveDictationInput, hasInitialized]);
+  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput]);
+
+  // Save current text when sentence changes
+  useEffect(() => {
+    return () => {
+      // Save current text when component unmounts or sentence changes
+      if (hasInitialized && isLoaded) {
+        saveDictationInput(targetText, sentenceIndex, userInput);
+      }
+    };
+  }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded]);
 
   // Handle user input changes: immediate display update with debounced saving
   useEffect(() => {
