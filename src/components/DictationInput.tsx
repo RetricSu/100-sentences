@@ -17,6 +17,9 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   const [hasInitialized, setHasInitialized] = useState(false);
   
   const { getDictationInput, saveDictationInput, isLoaded } = useDictationStorage();
+  
+  // Track the current sentence to prevent overwriting user input
+  const prevSentenceRef = useRef({ targetText, sentenceIndex });
 
 
 
@@ -24,7 +27,17 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   useEffect(() => {
     if (isLoaded && isVisible) {
       const savedInput = getDictationInput(targetText, sentenceIndex);
-      setUserInput(savedInput);
+      
+      // Check if this is actually a new sentence
+      const isNewSentence = prevSentenceRef.current.targetText !== targetText || 
+                           prevSentenceRef.current.sentenceIndex !== sentenceIndex;
+      
+      if (isNewSentence || !userInput) {
+        setUserInput(savedInput);
+      }
+      
+      // Update the ref for next comparison
+      prevSentenceRef.current = { targetText, sentenceIndex };
       setHasInitialized(true);
       
       // Focus the input when it becomes visible
@@ -32,7 +45,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         inputRef.current?.focus();
       }, 100);
     }
-  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput]);
+  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput, userInput]);
 
   // Save current text when sentence changes
   useEffect(() => {
@@ -42,7 +55,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         saveDictationInput(targetText, sentenceIndex, userInput);
       }
     };
-  }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded]);
+  }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, userInput]);
 
   // Handle user input changes: immediate display update and saving
   useEffect(() => {

@@ -55,14 +55,14 @@ export const DictationSentenceRenderer: React.FC<DictationSentenceRendererProps>
   return (
     <>
       {sentences.map((sentence, index) => {
-        const sentenceId = DictationDisplayUtils.generateSentenceId(sentence, index);
+        const sentenceId = DictationDisplayUtils.generateSentenceId(sentence.trim(), index);
         const savedInput = savedDictationInputs[sentenceId] || '';
         const isActive = dictationSentenceIndex === index;
         const isCurrentSentence = index === currentSentenceIndex;
 
         return (
           <SentenceDisplay
-            key={`${index}-${sentence.substring(0, 20)}`}
+            key={`sentence-${index}`}
             sentence={sentence}
             sentenceIndex={index}
             isActive={isActive}
