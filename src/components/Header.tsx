@@ -20,6 +20,10 @@ interface HeaderProps {
 
   // Settings
   onToggleSettings: () => void;
+
+  // Dictation mode
+  isDictationMode: boolean;
+  onToggleDictationMode: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +39,8 @@ export const Header: React.FC<HeaderProps> = ({
   hasText,
   onToggleReading,
   onToggleSettings,
+  isDictationMode,
+  onToggleDictationMode,
 }) => {
   const handlePreviousSentence = () => {
     if (currentSentenceIndex > 0) {
@@ -190,6 +196,35 @@ export const Header: React.FC<HeaderProps> = ({
                 : "0/0"}
             </div>
           </div>
+
+          {/* Dictation Mode Toggle */}
+          <button
+            onClick={onToggleDictationMode}
+            disabled={isSpeaking}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 ${
+              isSpeaking
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : isDictationMode
+                ? "bg-purple-500 text-white hover:bg-purple-600"
+                : "bg-white hover:bg-gray-50 text-gray-600 shadow-sm border border-gray-200"
+            }`}
+            title={isSpeaking ? "Dictation mode disabled during reading" : isDictationMode ? "Exit dictation mode" : "Enter dictation mode"}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+            <span>{isDictationMode ? "退出默写" : "默写模式"}</span>
+          </button>
 
           {/* Settings */}
           <button

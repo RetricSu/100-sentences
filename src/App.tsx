@@ -1,6 +1,8 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { createRoot } from "react-dom/client";
 import { useSpeech } from "./hooks/useSpeech";
 import { useDictionary } from "./hooks/useDictionary";
+import { useDictationStorage } from "./hooks/useDictationStorage";
 import {
   useLocalStorage,
   SavedText as SavedTextType,
@@ -8,12 +10,17 @@ import {
 import { DictionaryPopup } from "./components/DictionaryPopup";
 import { Header } from "./components/Header";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { DictationInput } from "./components/DictationInput";
 import { DictionaryEntry } from "./types/index";
 import { defaultText } from "./data/const";
 import { TextProcessor } from "./services/textProcessor";
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
+  const [isDictationMode, setIsDictationMode] = useState(false);
+  const [dictationSentenceIndex, setDictationSentenceIndex] = useState<number | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const dictationRootRef = useRef<any>(null);
 
   // Dictionary popup state
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
@@ -43,15 +50,30 @@ function App() {
     clearAllTexts,
   } = useLocalStorage();
 
+  // Dictation storage hook
+  const { clearAllDictationInputs, getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
+
   // Generate processed HTML when speech state changes
   const processedHtml = useMemo(() => {
     if (!speech.originalText.trim()) return "";
+    
+    if (isDictationMode) {
+      // Get all saved dictation inputs to show progress in inactive sentences
+      const savedInputs = isDictationStorageLoaded ? getAllDictationInputs() : {};
+      
+      return TextProcessor.processDictationHTML(speech.originalText, {
+        currentSentenceIndex: speech.currentSentenceIndex,
+        isSpeaking: speech.isSpeaking,
+        dictationSentenceIndex: dictationSentenceIndex,
+        savedDictationInputs: savedInputs,
+      });
+    }
     
     return TextProcessor.processTextToHTML(speech.originalText, {
       currentSentenceIndex: speech.currentSentenceIndex,
       isSpeaking: speech.isSpeaking,
     });
-  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking]);
+  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking, isDictationMode, dictationSentenceIndex, isDictationStorageLoaded, getAllDictationInputs]);
 
   // Handle text updates
   const handleTextUpdate = useCallback((text: string) => {
@@ -107,16 +129,26 @@ function App() {
             speech.stop();
           }
           
-          // Navigate to sentence and speak it
-          speech.jumpToSentence(sentenceIndex);
-          // Small delay to ensure stop takes effect
-          setTimeout(() => {
-            speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
-          }, 100);
+          if (isDictationMode) {
+            // In dictation mode, set this sentence for dictation
+            setDictationSentenceIndex(sentenceIndex);
+            speech.jumpToSentence(sentenceIndex);
+            // Still speak the sentence for audio reference
+            setTimeout(() => {
+              speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+            }, 100);
+          } else {
+            // Normal mode - navigate to sentence and speak it
+            speech.jumpToSentence(sentenceIndex);
+            // Small delay to ensure stop takes effect
+            setTimeout(() => {
+              speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+            }, 100);
+          }
         }
       }
     },
-    [speech]
+    [speech, isDictationMode]
   );
 
   // Combined click handler
@@ -172,6 +204,17 @@ function App() {
     }
   }, [clearAllTexts]);
 
+  // Clear all dictation inputs
+  const handleClearDictationInputs = useCallback(() => {
+    if (
+      confirm(
+        "Are you sure you want to clear all dictation progress? This action cannot be undone."
+      )
+    ) {
+      clearAllDictationInputs();
+    }
+  }, [clearAllDictationInputs]);
+
   // Header control handlers
   const handleSentenceNavigate = useCallback(
     (index: number) => {
@@ -205,6 +248,59 @@ function App() {
   const handleToggleSettings = useCallback(() => {
     setShowSettings(!showSettings);
   }, [showSettings]);
+
+  const handleToggleDictationMode = useCallback(() => {
+    setIsDictationMode(!isDictationMode);
+    // Reset dictation sentence when toggling mode
+    setDictationSentenceIndex(null);
+  }, [isDictationMode]);
+
+  const handleDictationComplete = useCallback(() => {
+    // Auto-advance to next sentence or reset
+    if (dictationSentenceIndex !== null && dictationSentenceIndex < speech.sentences.length - 1) {
+      setDictationSentenceIndex(dictationSentenceIndex + 1);
+      speech.jumpToSentence(dictationSentenceIndex + 1);
+    } else {
+      setDictationSentenceIndex(null);
+    }
+  }, [dictationSentenceIndex, speech]);
+
+  // Handle rendering DictationInput component into the DOM
+  useEffect(() => {
+    // Clean up previous dictation component
+    if (dictationRootRef.current) {
+      dictationRootRef.current.unmount();
+      dictationRootRef.current = null;
+    }
+
+    if (isDictationMode && dictationSentenceIndex !== null && contentRef.current) {
+      const containerId = `dictation-input-container-${dictationSentenceIndex}`;
+      const container = contentRef.current.querySelector(`#${containerId}`);
+      
+      if (container && speech.sentences[dictationSentenceIndex]) {
+        const root = createRoot(container);
+        dictationRootRef.current = root;
+        
+        root.render(
+          <DictationInput
+            targetText={speech.sentences[dictationSentenceIndex]}
+            sentenceIndex={dictationSentenceIndex}
+            isVisible={true}
+            onComplete={handleDictationComplete}
+            className=""
+          />
+        );
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (dictationRootRef.current) {
+        dictationRootRef.current.unmount();
+        dictationRootRef.current = null;
+      }
+    };
+  }, [isDictationMode, dictationSentenceIndex, speech.sentences, handleDictationComplete, processedHtml]);
 
   // Auto-load latest saved text on app initialization
   useEffect(() => {
@@ -255,6 +351,8 @@ function App() {
         hasText={speech.originalText.trim().length > 0}
         onToggleReading={handleToggleReading}
         onToggleSettings={handleToggleSettings}
+        isDictationMode={isDictationMode}
+        onToggleDictationMode={handleToggleDictationMode}
       />
 
       <div className="max-w-5xl mx-auto px-4 py-6 flex gap-6">
@@ -279,6 +377,7 @@ function App() {
             onVoiceChange={speech.setSelectedVoice}
             rate={speech.rate}
             onRateChange={speech.setRate}
+            onClearDictationInputs={handleClearDictationInputs}
           />
         </div>
 
@@ -286,6 +385,7 @@ function App() {
         <div className="flex-1 min-w-0">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
             <div
+              ref={contentRef}
               onClick={handleClick}
               dangerouslySetInnerHTML={{
                 __html: processedHtml,
@@ -304,6 +404,17 @@ function App() {
                 <p className="text-sm mt-2">
                   Or use the default text by clicking the button
                 </p>
+              </div>
+            )}
+
+            {/* Dictation mode instructions */}
+            {isDictationMode && dictationSentenceIndex === null && processedHtml && (
+              <div className="mt-8 border-t border-gray-200 pt-6">
+                <div className="text-center text-gray-600 py-8">
+                  <div className="text-lg font-medium mb-2">默写模式已启用</div>
+                  <p className="text-sm">点击上方任意句子开始默写练习</p>
+                  <p className="text-xs mt-1 text-gray-500">句子仍可点击朗读，帮助您听清发音</p>
+                </div>
               </div>
             )}
           </div>
