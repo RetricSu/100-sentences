@@ -71,11 +71,17 @@ export const useDictationStorage = () => {
     setDictationInputs({});
   }, []);
 
+  // Get all dictation inputs
+  const getAllDictationInputs = useCallback(() => {
+    return dictationInputs;
+  }, [dictationInputs]);
+
   return {
     getDictationInput,
     saveDictationInput,
     clearDictationInput,
     clearAllDictationInputs,
+    getAllDictationInputs,
     isLoaded
   };
 }; 

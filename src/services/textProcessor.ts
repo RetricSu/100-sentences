@@ -98,10 +98,16 @@ export class TextProcessor {
   /**
    * Process text into masked HTML for dictation mode
    */
-  static processDictationHTML(text: string, options: ProcessedTextOptions & { dictationSentenceIndex?: number | null }): string {
+  static processDictationHTML(
+    text: string, 
+    options: ProcessedTextOptions & { 
+      dictationSentenceIndex?: number | null;
+      savedDictationInputs?: { [sentenceId: string]: string };
+    }
+  ): string {
     if (!text.trim()) return "";
 
-    const { currentSentenceIndex, isSpeaking, dictationSentenceIndex } = options;
+    const { currentSentenceIndex, isSpeaking, dictationSentenceIndex, savedDictationInputs = {} } = options;
     
     // Process all sentences using the same logic as the speech hook
     const allSentences = this.processSentences(text);
@@ -111,6 +117,64 @@ export class TextProcessor {
     allSentences.forEach((sentence, index) => {
       sentenceToIndexMap.set(sentence.trim(), index);
     });
+
+    // Helper function to generate sentence ID (matching useDictationStorage logic)
+    const generateSentenceId = (sentenceText: string, sentenceIndex: number) => {
+      const textHash = sentenceText.trim().substring(0, 50);
+      return `${sentenceIndex}-${textHash}`;
+    };
+
+    // Helper function to generate progress display for inactive sentences
+    const generateProgressDisplay = (sentence: string, sentenceIndex: number): string => {
+      const sentenceId = generateSentenceId(sentence, sentenceIndex);
+      const savedInput = savedDictationInputs[sentenceId] || '';
+      
+      if (!savedInput.trim()) {
+        // No saved progress - show basic masked text
+        return this.generateMaskedText(sentence.trim());
+      }
+
+      // Generate display with saved progress
+      const userLetters = savedInput.replace(/\s+/g, '');
+      const tokens = sentence.trim().split(/(\s+)/);
+      let globalLetterIndex = 0;
+      let result = '';
+
+      for (const token of tokens) {
+        if (token.trim() === '') {
+          // Whitespace
+          result += '&nbsp;';
+        } else {
+          const cleanWord = token.replace(/[^a-zA-Z]/g, '');
+          if (cleanWord.length === 0) {
+            // Pure punctuation
+            result += `<span class="text-gray-700">${token}</span>`;
+          } else {
+            // Word with letters
+            for (const char of token) {
+              if (/[a-zA-Z]/.test(char)) {
+                const userChar = userLetters[globalLetterIndex];
+                if (globalLetterIndex < userLetters.length && userChar) {
+                  const isCorrect = userChar.toLowerCase() === char.toLowerCase();
+                  result += `<span class="inline-block relative min-w-[1ch]">
+                    <span class="text-gray-200 select-none">_</span>
+                    <span class="absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium">${userChar}</span>
+                  </span>`;
+                } else {
+                  result += `<span class="inline-block min-w-[1ch] text-gray-400">_</span>`;
+                }
+                globalLetterIndex++;
+              } else {
+                // Punctuation within word
+                result += `<span class="text-gray-700">${char}</span>`;
+              }
+            }
+          }
+        }
+      }
+
+      return result;
+    };
 
     // Split into paragraphs for visual layout
     const paragraphs = text
@@ -126,9 +190,6 @@ export class TextProcessor {
           .map((sentence) => {
             // Get the global index for this sentence
             const globalIndex = sentenceToIndexMap.get(sentence.trim()) || 0;
-
-            // Generate masked text for this sentence
-            const maskedText = this.generateMaskedText(sentence.trim());
 
             // Check if this is the sentence being dictated
             const isDictationActive = dictationSentenceIndex === globalIndex;
@@ -149,9 +210,10 @@ export class TextProcessor {
                 </div>
               </div>`;
             } else {
-              // Show normal masked text for other sentences
+              // Show progress display for inactive sentences
+              const progressDisplay = generateProgressDisplay(sentence, globalIndex);
               return `<div class="${sentenceClass}" data-sentence-index="${globalIndex}">
-                <div class="font-mono text-lg tracking-wider text-gray-500 mb-2">${maskedText}</div>
+                <div class="font-mono text-lg tracking-wider mb-2">${progressDisplay}</div>
               </div>`;
             }
           })

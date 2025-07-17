@@ -51,17 +51,21 @@ function App() {
   } = useLocalStorage();
 
   // Dictation storage hook
-  const { clearAllDictationInputs } = useDictationStorage();
+  const { clearAllDictationInputs, getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
 
   // Generate processed HTML when speech state changes
   const processedHtml = useMemo(() => {
     if (!speech.originalText.trim()) return "";
     
     if (isDictationMode) {
+      // Get all saved dictation inputs to show progress in inactive sentences
+      const savedInputs = isDictationStorageLoaded ? getAllDictationInputs() : {};
+      
       return TextProcessor.processDictationHTML(speech.originalText, {
         currentSentenceIndex: speech.currentSentenceIndex,
         isSpeaking: speech.isSpeaking,
         dictationSentenceIndex: dictationSentenceIndex,
+        savedDictationInputs: savedInputs,
       });
     }
     
@@ -69,7 +73,7 @@ function App() {
       currentSentenceIndex: speech.currentSentenceIndex,
       isSpeaking: speech.isSpeaking,
     });
-  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking, isDictationMode, dictationSentenceIndex]);
+  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking, isDictationMode, dictationSentenceIndex, isDictationStorageLoaded, getAllDictationInputs]);
 
   // Handle text updates
   const handleTextUpdate = useCallback((text: string) => {
