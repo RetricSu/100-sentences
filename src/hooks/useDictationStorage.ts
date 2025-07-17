@@ -1,10 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
+import { DictationStorage, UseDictationStorageReturn } from '../types/dictation';
 
-interface DictationStorage {
-  [sentenceId: string]: string;
-}
-
-export const useDictationStorage = () => {
+export const useDictationStorage = (): UseDictationStorageReturn => {
   const [dictationInputs, setDictationInputs] = useState<DictationStorage>({});
   const [isLoaded, setIsLoaded] = useState(false);
 

@@ -1,7 +1,4 @@
-export interface ProcessedTextOptions {
-  currentSentenceIndex: number;
-  isSpeaking: boolean;
-}
+import { ProcessedTextOptions, DictationProcessingOptions } from '../types/dictation';
 
 export class TextProcessor {
   /**
@@ -100,10 +97,7 @@ export class TextProcessor {
    */
   static processDictationHTML(
     text: string, 
-    options: ProcessedTextOptions & { 
-      dictationSentenceIndex?: number | null;
-      savedDictationInputs?: { [sentenceId: string]: string };
-    }
+    options: DictationProcessingOptions
   ): string {
     if (!text.trim()) return "";
 
