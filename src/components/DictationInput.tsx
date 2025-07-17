@@ -38,7 +38,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     }
   }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput]);
 
-  // Handle user input changes: save input, check completion, and auto-space
+  // Handle user input changes: save input and check completion
   useEffect(() => {
     if (!hasInitialized || !isLoaded) return;
     
@@ -53,11 +53,6 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     } else {
       setIsCompleted(false);
     }
-    
-    // Auto-complete spaces when word is finished
-    if (DictationService.shouldAutoSpace(targetText, userInput)) {
-      setUserInput(userInput + ' ');
-    }
   }, [userInput, targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, onComplete]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +60,15 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     
     // Only allow letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
-    setUserInput(filteredValue);
+    
+    // Check if we should auto-add a space after a completed word
+    const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
+    
+    if (shouldAddSpace) {
+      setUserInput(filteredValue + ' ');
+    } else {
+      setUserInput(filteredValue);
+    }
   };
 
 
