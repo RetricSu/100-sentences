@@ -13,6 +13,7 @@ import { DictationSentenceRenderer } from "./components/DictationSentenceRendere
 import { DictionaryEntry } from "./types/index";
 import { defaultText } from "./data/const";
 import { TextProcessor } from "./services/textProcessor";
+import { DictationDisplayUtils } from "./utils/dictationDisplay";
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
@@ -51,6 +52,12 @@ function App() {
 
   // Dictation storage hook
   const { clearAllDictationInputs, getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
+  
+  // Reactive state for dictation inputs to ensure real-time updates
+  const [dictationInputs, setDictationInputs] = useState<Record<string, string>>({});
+  
+  // Real-time typed text for all sentences (not just the active one)
+  const [realTimeInputs, setRealTimeInputs] = useState<Record<string, string>>({});
 
   // Generate processed HTML for normal mode only (dictation mode uses React components)
   const processedHtml = useMemo(() => {
@@ -252,8 +259,24 @@ function App() {
     }
   }, [dictationSentenceIndex, speech]);
 
+  // Handle real-time input updates for all sentences
+  const handleRealTimeInputUpdate = useCallback((sentence: string, sentenceIndex: number, input: string) => {
+    const sentenceId = DictationDisplayUtils.generateSentenceId(sentence.trim(), sentenceIndex);
+    setRealTimeInputs(prev => ({
+      ...prev,
+      [sentenceId]: input
+    }));
+  }, []);
+
   // Remove the entire manual React root management useEffect
   // This will be replaced with proper declarative rendering
+
+  // Sync dictation inputs in real-time
+  useEffect(() => {
+    if (isDictationStorageLoaded) {
+      setDictationInputs(getAllDictationInputs());
+    }
+  }, [isDictationStorageLoaded, getAllDictationInputs, dictationSentenceIndex, isDictationMode]);
 
   // Auto-load latest saved text on app initialization
   useEffect(() => {
@@ -354,7 +377,9 @@ function App() {
                   dictationSentenceIndex={dictationSentenceIndex}
                   currentSentenceIndex={speech.currentSentenceIndex}
                   isSpeaking={speech.isSpeaking}
-                  savedDictationInputs={isDictationStorageLoaded ? getAllDictationInputs() : {}}
+                  savedDictationInputs={isDictationStorageLoaded ? dictationInputs : {}}
+                  realTimeInputs={realTimeInputs}
+                  onRealTimeInputUpdate={handleRealTimeInputUpdate}
                   onDictationComplete={handleDictationComplete}
                 />
               </div>

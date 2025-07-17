@@ -9,57 +9,32 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   sentenceIndex,
   isVisible,
   onComplete,
+  onInputChange,
+  initialInput = "",
   className = "",
 }) => {
-  const [userInput, setUserInput] = useState("");
+  const [userInput, setUserInput] = useState(initialInput);
   const [isCompleted, setIsCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [hasInitialized, setHasInitialized] = useState(false);
   
-  const { getDictationInput, saveDictationInput, isLoaded } = useDictationStorage();
-  
-  // Track the current sentence to prevent overwriting user input
-  const prevSentenceRef = useRef({ targetText, sentenceIndex });
+  const { saveDictationInput, isLoaded } = useDictationStorage();
 
 
 
-  // Handle sentence/text changes: load saved input
-  useEffect(() => {
-    if (isLoaded && isVisible) {
-      const savedInput = getDictationInput(targetText, sentenceIndex);
-      
-      // Check if this is actually a new sentence
-      const isNewSentence = prevSentenceRef.current.targetText !== targetText || 
-                           prevSentenceRef.current.sentenceIndex !== sentenceIndex;
-      
-      if (isNewSentence || !userInput) {
-        setUserInput(savedInput);
-      }
-      
-      // Update the ref for next comparison
-      prevSentenceRef.current = { targetText, sentenceIndex };
-      setHasInitialized(true);
-      
-      // Focus the input when it becomes visible
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-    }
-  }, [isLoaded, isVisible, targetText, sentenceIndex, getDictationInput, userInput]);
 
   // Save current text when sentence changes
   useEffect(() => {
     return () => {
       // Save current text when component unmounts or sentence changes
-      if (hasInitialized && isLoaded) {
+      if (isLoaded) {
         saveDictationInput(targetText, sentenceIndex, userInput);
       }
     };
-  }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, userInput]);
+  }, [targetText, sentenceIndex, saveDictationInput, isLoaded, userInput]);
 
-  // Handle user input changes: immediate display update and saving
+  // Handle user input changes: immediate display update, saving, and parent notification
   useEffect(() => {
-    if (!hasInitialized || !isLoaded) return;
+    if (!isLoaded) return;
     
     // Check completion immediately for responsive UI
     const isCompleted = DictationService.checkCompletion(targetText, userInput);
@@ -70,9 +45,12 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       setIsCompleted(false);
     }
     
-    // Save immediately without debounce
+    // Save to storage
     saveDictationInput(targetText, sentenceIndex, userInput);
-  }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, onComplete]);
+    
+    // Notify parent of real-time changes
+    onInputChange?.(userInput);
+  }, [targetText, sentenceIndex, saveDictationInput, isLoaded, onComplete, onInputChange]);
 
 
 
@@ -86,11 +64,9 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     // Check if we should auto-add a space after a completed word
     const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
     
-    if (shouldAddSpace) {
-      setUserInput(filteredValue + ' ');
-    } else {
-      setUserInput(filteredValue);
-    }
+    const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
+    setUserInput(newValue);
+    onInputChange?.(newValue);
   };
 
   const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {

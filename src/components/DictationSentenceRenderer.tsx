@@ -10,10 +10,13 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
   isCurrentSentence,
   isSpeaking,
   savedInput,
+  realTimeInput,
+  onRealTimeInputUpdate,
   onDictationComplete,
 }) => {
   const generateProgressDisplay = (): React.ReactNode[] => {
-    return DictationDisplayUtils.generateMaskedDisplay(sentence.trim(), savedInput);
+    const displayInput = realTimeInput || savedInput;
+    return DictationDisplayUtils.generateMaskedDisplay(sentence.trim(), displayInput);
   };
 
 
@@ -32,6 +35,8 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
             sentenceIndex={sentenceIndex}
             isVisible={true}
             onComplete={onDictationComplete}
+            onInputChange={(input) => onRealTimeInputUpdate(sentence, sentenceIndex, input)}
+            initialInput={realTimeInput || savedInput}
             className=""
           />
         </div>
@@ -50,6 +55,8 @@ export const DictationSentenceRenderer: React.FC<DictationSentenceRendererProps>
   currentSentenceIndex,
   isSpeaking,
   savedDictationInputs,
+  realTimeInputs,
+  onRealTimeInputUpdate,
   onDictationComplete,
 }) => {
   return (
@@ -57,6 +64,7 @@ export const DictationSentenceRenderer: React.FC<DictationSentenceRendererProps>
       {sentences.map((sentence, index) => {
         const sentenceId = DictationDisplayUtils.generateSentenceId(sentence.trim(), index);
         const savedInput = savedDictationInputs[sentenceId] || '';
+        const realTimeInput = realTimeInputs[sentenceId] || '';
         const isActive = dictationSentenceIndex === index;
         const isCurrentSentence = index === currentSentenceIndex;
 
@@ -69,6 +77,8 @@ export const DictationSentenceRenderer: React.FC<DictationSentenceRendererProps>
             isCurrentSentence={isCurrentSentence}
             isSpeaking={isSpeaking}
             savedInput={savedInput}
+            realTimeInput={realTimeInput}
+            onRealTimeInputUpdate={onRealTimeInputUpdate}
             onDictationComplete={onDictationComplete}
           />
         );
