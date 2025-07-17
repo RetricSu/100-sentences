@@ -52,6 +52,18 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     onInputChange?.(userInput);
   }, [targetText, sentenceIndex, saveDictationInput, isLoaded, onComplete, onInputChange]);
 
+  // Focus input when it becomes visible
+  useEffect(() => {
+    if (isVisible && isLoaded) {
+      // Use a small delay to ensure the DOM is ready
+      const timeoutId = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isVisible, isLoaded]);
+
 
 
 
