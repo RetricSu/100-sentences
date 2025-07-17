@@ -162,33 +162,32 @@ export const DictationInput: React.FC<DictationInputProps> = ({
             if (/[a-zA-Z]/.test(char)) {
               // This is a letter
               const userChar = userLetters[globalLetterIndex];
-              let className = "inline-block";
               
               if (globalLetterIndex < userLetters.length) {
-                // Character has been typed
-                if (userChar && userChar.toLowerCase() === char.toLowerCase()) {
-                  className += " text-green-600"; // Correct
-                } else {
-                  className += " text-red-600"; // Wrong
-                }
+                // Character has been typed - show both underscore and typed character
+                const isCorrect = userChar && userChar.toLowerCase() === char.toLowerCase();
+                
                 charResult.push(
-                  <span key={`${tokenIndex}-${charIndex}`} className={className}>
-                    {userChar}
+                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block relative min-w-[1ch]">
+                    {/* Underscore background - slightly faded */}
+                    <span className="text-gray-200 select-none">_</span>
+                    {/* Typed character overlay - positioned to align with underscore */}
+                    <span className={`absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium`}>
+                      {userChar}
+                    </span>
                   </span>
                 );
               } else if (globalLetterIndex === userLetters.length) {
-                // This is the next character to type - show cursor
-                className += " text-gray-800 bg-blue-100 animate-pulse";
+                // This is the next character to type - show cursor with underscore
                 charResult.push(
-                  <span key={`${tokenIndex}-${charIndex}`} className={className}>
+                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block min-w-[1ch] text-gray-800 bg-blue-100 animate-pulse">
                     _
                   </span>
                 );
               } else {
                 // Future character - show as underscore
-                className += " text-gray-400";
                 charResult.push(
-                  <span key={`${tokenIndex}-${charIndex}`} className={className}>
+                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block min-w-[1ch] text-gray-400">
                     _
                   </span>
                 );
