@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { createRoot } from "react-dom/client";
 import { useSpeech } from "./hooks/useSpeech";
 import { useDictionary } from "./hooks/useDictionary";
 import { useDictationStorage } from "./hooks/useDictationStorage";
@@ -10,17 +9,18 @@ import {
 import { DictionaryPopup } from "./components/DictionaryPopup";
 import { Header } from "./components/Header";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { DictationInput } from "./components/DictationInput";
+import { DictationSentenceRenderer } from "./components/DictationSentenceRenderer";
 import { DictionaryEntry } from "./types/index";
 import { defaultText } from "./data/const";
 import { TextProcessor } from "./services/textProcessor";
+import { DictationDisplayUtils } from "./utils/dictationDisplay";
 
 function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [isDictationMode, setIsDictationMode] = useState(false);
   const [dictationSentenceIndex, setDictationSentenceIndex] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const dictationRootRef = useRef<any>(null);
+  // Remove dictationRootRef - no longer needed
 
   // Dictionary popup state
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
@@ -52,28 +52,22 @@ function App() {
 
   // Dictation storage hook
   const { clearAllDictationInputs, getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
+  
+  // Reactive state for dictation inputs to ensure real-time updates
+  const [dictationInputs, setDictationInputs] = useState<Record<string, string>>({});
+  
+  // Real-time typed text for all sentences (not just the active one)
+  const [realTimeInputs, setRealTimeInputs] = useState<Record<string, string>>({});
 
-  // Generate processed HTML when speech state changes
+  // Generate processed HTML for normal mode only (dictation mode uses React components)
   const processedHtml = useMemo(() => {
-    if (!speech.originalText.trim()) return "";
-    
-    if (isDictationMode) {
-      // Get all saved dictation inputs to show progress in inactive sentences
-      const savedInputs = isDictationStorageLoaded ? getAllDictationInputs() : {};
-      
-      return TextProcessor.processDictationHTML(speech.originalText, {
-        currentSentenceIndex: speech.currentSentenceIndex,
-        isSpeaking: speech.isSpeaking,
-        dictationSentenceIndex: dictationSentenceIndex,
-        savedDictationInputs: savedInputs,
-      });
-    }
+    if (!speech.originalText.trim() || isDictationMode) return "";
     
     return TextProcessor.processTextToHTML(speech.originalText, {
       currentSentenceIndex: speech.currentSentenceIndex,
       isSpeaking: speech.isSpeaking,
     });
-  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking, isDictationMode, dictationSentenceIndex, isDictationStorageLoaded, getAllDictationInputs]);
+  }, [speech.originalText, speech.currentSentenceIndex, speech.isSpeaking, isDictationMode]);
 
   // Handle text updates
   const handleTextUpdate = useCallback((text: string) => {
@@ -265,42 +259,24 @@ function App() {
     }
   }, [dictationSentenceIndex, speech]);
 
-  // Handle rendering DictationInput component into the DOM
+  // Handle real-time input updates for all sentences
+  const handleRealTimeInputUpdate = useCallback((sentence: string, sentenceIndex: number, input: string) => {
+    const sentenceId = DictationDisplayUtils.generateSentenceId(sentence.trim(), sentenceIndex);
+    setRealTimeInputs(prev => ({
+      ...prev,
+      [sentenceId]: input
+    }));
+  }, []);
+
+  // Remove the entire manual React root management useEffect
+  // This will be replaced with proper declarative rendering
+
+  // Sync dictation inputs in real-time
   useEffect(() => {
-    // Clean up previous dictation component
-    if (dictationRootRef.current) {
-      dictationRootRef.current.unmount();
-      dictationRootRef.current = null;
+    if (isDictationStorageLoaded) {
+      setDictationInputs(getAllDictationInputs());
     }
-
-    if (isDictationMode && dictationSentenceIndex !== null && contentRef.current) {
-      const containerId = `dictation-input-container-${dictationSentenceIndex}`;
-      const container = contentRef.current.querySelector(`#${containerId}`);
-      
-      if (container && speech.sentences[dictationSentenceIndex]) {
-        const root = createRoot(container);
-        dictationRootRef.current = root;
-        
-        root.render(
-          <DictationInput
-            targetText={speech.sentences[dictationSentenceIndex]}
-            sentenceIndex={dictationSentenceIndex}
-            isVisible={true}
-            onComplete={handleDictationComplete}
-            className=""
-          />
-        );
-      }
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (dictationRootRef.current) {
-        dictationRootRef.current.unmount();
-        dictationRootRef.current = null;
-      }
-    };
-  }, [isDictationMode, dictationSentenceIndex, speech.sentences, handleDictationComplete, processedHtml]);
+  }, [isDictationStorageLoaded, getAllDictationInputs, dictationSentenceIndex, isDictationMode]);
 
   // Auto-load latest saved text on app initialization
   useEffect(() => {
@@ -309,7 +285,7 @@ function App() {
       console.log('Auto-loading latest saved text:', latestText.title);
       handleTextUpdate(latestText.content);
     }
-  }, [savedTextsLoading, storedTexts.length, handleTextUpdate, speech.originalText]);
+  }, [savedTextsLoading, storedTexts, speech.originalText, handleTextUpdate]);
 
   // Initialize with default text if no saved texts
   useEffect(() => {
@@ -384,21 +360,47 @@ function App() {
         {/* Main Content Area */}
         <div className="flex-1 min-w-0">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div
-              ref={contentRef}
-              onClick={handleClick}
-              dangerouslySetInnerHTML={{
-                __html: processedHtml,
-              }}
-              className="prose prose-lg max-w-none leading-relaxed text-gray-900"
-              style={{
-                fontSize: "18px",
-                lineHeight: "1.8",
-                fontFamily: 'Georgia, "Times New Roman", Times, serif',
-              }}
-            />
+            {isDictationMode && speech.originalText.trim() ? (
+              // Dictation mode: Use React components for declarative rendering
+              <div
+                ref={contentRef}
+                onClick={handleClick}
+                className="prose prose-lg max-w-none leading-relaxed text-gray-900"
+                style={{
+                  fontSize: "18px",
+                  lineHeight: "1.8",
+                  fontFamily: 'Georgia, "Times New Roman", Times, serif',
+                }}
+              >
+                <DictationSentenceRenderer
+                  sentences={speech.sentences}
+                  dictationSentenceIndex={dictationSentenceIndex}
+                  currentSentenceIndex={speech.currentSentenceIndex}
+                  isSpeaking={speech.isSpeaking}
+                  savedDictationInputs={isDictationStorageLoaded ? dictationInputs : {}}
+                  realTimeInputs={realTimeInputs}
+                  onRealTimeInputUpdate={handleRealTimeInputUpdate}
+                  onDictationComplete={handleDictationComplete}
+                />
+              </div>
+            ) : (
+              // Normal mode: Use HTML rendering
+              <div
+                ref={contentRef}
+                onClick={handleClick}
+                dangerouslySetInnerHTML={{
+                  __html: processedHtml,
+                }}
+                className="prose prose-lg max-w-none leading-relaxed text-gray-900"
+                style={{
+                  fontSize: "18px",
+                  lineHeight: "1.8",
+                  fontFamily: 'Georgia, "Times New Roman", Times, serif',
+                }}
+              />
+            )}
 
-            {!processedHtml && (
+            {!speech.originalText.trim() && (
               <div className="text-center text-gray-500 py-12">
                 <p className="text-lg">Click "Update Text" to start reading</p>
                 <p className="text-sm mt-2">
@@ -408,7 +410,7 @@ function App() {
             )}
 
             {/* Dictation mode instructions */}
-            {isDictationMode && dictationSentenceIndex === null && processedHtml && (
+            {isDictationMode && dictationSentenceIndex === null && speech.originalText.trim() && (
               <div className="mt-8 border-t border-gray-200 pt-6">
                 <div className="text-center text-gray-600 py-8">
                   <div className="text-lg font-medium mb-2">默写模式已启用</div>
