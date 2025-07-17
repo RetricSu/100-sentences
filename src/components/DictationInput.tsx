@@ -15,7 +15,6 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   const [isCompleted, setIsCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
   
   const { getDictationInput, saveDictationInput, isLoaded } = useDictationStorage();
 
@@ -45,7 +44,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     };
   }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded]);
 
-  // Handle user input changes: immediate display update with debounced saving
+  // Handle user input changes: immediate display update and saving
   useEffect(() => {
     if (!hasInitialized || !isLoaded) return;
     
@@ -58,20 +57,8 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       setIsCompleted(false);
     }
     
-    // Debounce the saving to reduce performance impact
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-    
-    debounceRef.current = setTimeout(() => {
-      saveDictationInput(targetText, sentenceIndex, userInput);
-    }, 50);
-    
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
+    // Save immediately without debounce
+    saveDictationInput(targetText, sentenceIndex, userInput);
   }, [targetText, sentenceIndex, saveDictationInput, hasInitialized, isLoaded, onComplete]);
 
 
