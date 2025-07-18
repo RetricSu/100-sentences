@@ -160,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onToggleDictationMode}
             disabled={isSpeaking}
             className={`btn-secondary ${
-              isDictationMode ? "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100" : ""
+              isDictationMode ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : ""
             } ${isSpeaking ? "opacity-50 cursor-not-allowed" : ""}`}
             title={isSpeaking ? "朗读时无法切换模式" : isDictationMode ? "退出默写模式" : "进入默写模式"}
           >
