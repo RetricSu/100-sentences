@@ -46,8 +46,8 @@ export class TextProcessor {
             const shouldHighlight = isCurrentSentence && (isSpeaking || currentSentenceIndex > 0);
             
             const sentenceClass = shouldHighlight
-              ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 my-2 rounded-r-lg shadow-sm"
-              : "sentence py-1 my-1 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors";
+              ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 rounded-r-lg shadow-sm"
+              : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
 
             return `<div class="${sentenceClass}" data-sentence-index="${globalIndex}">${processedWords}</div>`;
           })
@@ -193,8 +193,8 @@ export class TextProcessor {
             const shouldHighlight = isCurrentSentence && (isSpeaking || currentSentenceIndex > 0);
             
             const sentenceClass = shouldHighlight
-              ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 py-2 my-2 rounded-r-lg shadow-sm"
-              : "sentence py-1 my-1 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors";
+              ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 rounded-r-lg shadow-sm"
+              : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
 
             if (isDictationActive) {
               // Show input field integrated with masked text for active dictation sentence

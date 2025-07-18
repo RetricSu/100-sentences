@@ -36,11 +36,11 @@
   }
   
   .reading-text {
-    @apply text-lg leading-relaxed text-stone-700 font-serif;
+    @apply text-xl leading-relaxed text-stone-700 font-serif;
   }
   
   .sentence {
-    @apply inline-block px-0.5 py-0.5 rounded-md transition-all duration-200 cursor-pointer hover:bg-stone-100;
+    @apply inline-block text-xl px-6 py-4 my-2 w-full rounded-md transition-all duration-200 cursor-pointer hover:bg-stone-100;
   }
   
   .sentence:hover {
@@ -48,11 +48,11 @@
   }
   
   .current-sentence {
-    @apply bg-sky-50 text-sky-900 border border-sky-200;
+    @apply sentence bg-sky-50 text-sky-900 border border-sky-200;
   }
   
   .word {
-    @apply px-1 py-0.5 rounded cursor-pointer transition-all duration-200 hover:bg-stone-200;
+    @apply px-4 py-2 rounded cursor-pointer transition-all duration-200 hover:bg-stone-200;
   }
   
   .word:hover {
@@ -66,7 +66,7 @@
   }
   
   .prose-reading {
-    @apply prose prose-lg prose-stone max-w-reading;
+    @apply prose-stone w-full;
   }
   
   .scrollbar-thin {
