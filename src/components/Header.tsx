@@ -70,10 +70,10 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">英语精读</h1>
+          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">顽童英语</h1>
           {dictionaryLoaded && (
             <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full font-medium">
-              {dictionarySize.toLocaleString()} 词汇
+              {dictionarySize.toLocaleString()} 本地词典
             </div>
           )}
         </div>
@@ -93,14 +93,14 @@ export const Header: React.FC<HeaderProps> = ({
                 isSpeaking ? "bg-rose-500 animate-pulse" : "bg-stone-400"
               }`}
             ></div>
-            <span className="text-sm font-medium">{isSpeaking ? "朗读中" : "待机"}</span>
+            <span className="text-sm font-medium">{isSpeaking ? "暂停" : "待机"}</span>
           </button>
 
           {/* Read All Button */}
           <button
             onClick={handleStartReading}
             disabled={!hasText || isSpeaking}
-            className="btn-primary"
+            className="btn-secondary"
             title="朗读全文"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"

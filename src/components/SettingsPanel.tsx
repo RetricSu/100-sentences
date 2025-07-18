@@ -54,7 +54,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   // Internal state management
   const [inputText, setInputText] = useState("");
   const [saveTextTitle, setSaveTextTitle] = useState("");
-  const [showSavedTexts, setShowSavedTexts] = useState(false);
+  const [showSavedTexts, setShowSavedTexts] = useState(true);
 
   // Handle text conversion
   const handleConvert = useCallback(() => {
@@ -103,18 +103,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   return (
     <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-6">
       <h3 className="font-semibold text-gray-800 text-lg border-b border-gray-100 pb-2">
-        Settings
+        设置      
       </h3>
 
       {/* Text Input Section */}
       <div className="space-y-3">
         <label className="block text-sm font-medium text-gray-700">
-          Input Text
+          输入文本
         </label>
         <textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Enter English text or leave empty to use default..."
+          placeholder="输入英文文本或留空使用默认文本"
           className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
         />
         
@@ -123,7 +123,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             onClick={handleConvert}
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
           >
-            Update Text
+            更新文本
           </button>
           <button
             onClick={handleSaveText}
@@ -131,7 +131,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
             title="Save current text"
           >
-            💾
+            💾 保存
           </button>
         </div>
 
@@ -139,7 +139,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           type="text"
           value={saveTextTitle}
           onChange={(e) => setSaveTextTitle(e.target.value)}
-          placeholder="Optional: Enter title for saving..."
+          placeholder="可选: 输入保存标题"
           className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
         />
       </div>
@@ -148,13 +148,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-gray-700">
-            Saved Texts ({savedTexts.length})
+            已保存文本 ({savedTexts.length})
           </label>
           <button
             onClick={toggleSavedTexts}
             className="text-blue-500 hover:text-blue-700 text-sm font-medium transition-colors"
           >
-            {showSavedTexts ? "Hide" : "Show"}
+            {showSavedTexts ? "隐藏" : "展开"}
           </button>
         </div>
 
