@@ -52,7 +52,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     onInputChange?.(userInput);
   }, [targetText, sentenceIndex, saveDictationInput, isLoaded, onComplete, onInputChange]);
 
-  // Focus input when it becomes visible
+  // Focus input when it becomes visible and maintain focus
   useEffect(() => {
     if (isVisible && isLoaded) {
       // Use a small delay to ensure the DOM is ready
@@ -64,7 +64,51 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     }
   }, [isVisible, isLoaded]);
 
+  // Maintain focus when input loses focus (unless component is unmounting)
+  useEffect(() => {
+    if (!isVisible || !isLoaded) return;
 
+    const handleFocusLoss = () => {
+      // Small delay to ensure we don't interfere with legitimate focus changes
+      setTimeout(() => {
+        if (isVisible && isLoaded && inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 10);
+    };
+
+    const inputElement = inputRef.current;
+    if (inputElement) {
+      inputElement.addEventListener('blur', handleFocusLoss);
+      return () => inputElement.removeEventListener('blur', handleFocusLoss);
+    }
+  }, [isVisible, isLoaded]);
+
+  // Global click handler to refocus input when clicking outside
+  useEffect(() => {
+    if (!isVisible || !isLoaded) return;
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Don't refocus if clicking on the input itself or its container
+      if (inputRef.current?.contains(target) || 
+          target.closest('.dictation-input-container') ||
+          target.closest('.dictation-active-sentence')) {
+        return;
+      }
+      
+      // Small delay to ensure the click event has processed
+      setTimeout(() => {
+        if (isVisible && isLoaded && inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 50);
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, [isVisible, isLoaded]);
 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,7 +144,13 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className={`dictation-input-container ${className}`}>
+    <div 
+      className={`dictation-input-container ${className}`}
+      onClick={(e) => {
+        e.stopPropagation(); // Prevent click from bubbling up to parent
+        inputRef.current?.focus();
+      }}
+    >
       {/* Invisible input for capturing keystrokes */}
       <input
         ref={inputRef}
@@ -116,7 +166,10 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       {/* Visual display that looks like writing on underscores */}
       <div
         className="font-mono text-lg leading-relaxed tracking-wider cursor-text relative"
-        onClick={() => inputRef.current?.focus()}
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent click from bubbling up to parent
+          inputRef.current?.focus();
+        }}
       >
         {generateDisplayText()}
       </div>

@@ -127,13 +127,22 @@ function App() {
           }
           
           if (isDictationMode) {
-            // In dictation mode, set this sentence for dictation
-            setDictationSentenceIndex(sentenceIndex);
-            speech.jumpToSentence(sentenceIndex);
-            // Still speak the sentence for audio reference
-            setTimeout(() => {
-              speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
-            }, 100);
+            // Check if clicking on the currently active dictation sentence
+            if (dictationSentenceIndex === sentenceIndex) {
+              // Just speak the sentence without changing dictation state
+              // This preserves focus on the input field
+              setTimeout(() => {
+                speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+              }, 100);
+            } else {
+              // Set this sentence for dictation (different sentence)
+              setDictationSentenceIndex(sentenceIndex);
+              speech.jumpToSentence(sentenceIndex);
+              // Still speak the sentence for audio reference
+              setTimeout(() => {
+                speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+              }, 100);
+            }
           } else {
             // Normal mode - navigate to sentence and speak it
             speech.jumpToSentence(sentenceIndex);
@@ -145,7 +154,7 @@ function App() {
         }
       }
     },
-    [speech, isDictationMode]
+    [speech, isDictationMode, dictationSentenceIndex]
   );
 
   // Combined click handler
