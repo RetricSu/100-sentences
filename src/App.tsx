@@ -311,12 +311,25 @@ function App() {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Only trigger on spacebar and when not typing in an input field
       const target = event.target as HTMLElement;
-      const isInputField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.contentEditable === 'true';
+      
+      // More comprehensive input field detection
+      const isInputField = 
+        (target?.tagName === 'INPUT' && !target?.classList.contains('opacity-0')) || 
+        target?.tagName === 'TEXTAREA' || 
+        target?.contentEditable === 'true';
       
       // Check for both Space code and space key
       if ((event.code === 'Space' || event.key === ' ') && !isInputField) {
         event.preventDefault();
         event.stopPropagation();
+        
+        console.debug('Space hotkey triggered', {
+          target: target?.tagName,
+          isInputField,
+          hasOpacity0: target?.classList.contains('opacity-0'),
+          isSpeaking: speech.isSpeaking,
+          sentencesLength: speech.sentences.length
+        });
         
         // If speaking, stop playback
         if (speech.isSpeaking) {
