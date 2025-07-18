@@ -24,6 +24,9 @@ interface HeaderProps {
   // Dictation mode
   isDictationMode: boolean;
   onToggleDictationMode: () => void;
+  
+  // Hotkey feedback
+  hotkeyPressed?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -41,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSettings,
   isDictationMode,
   onToggleDictationMode,
+  hotkeyPressed = false,
 }) => {
   const handlePreviousSentence = () => {
     if (currentSentenceIndex > 0) {
@@ -127,14 +131,19 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onSpeakCurrentSentence}
               disabled={sentences.length === 0 || isSpeaking}
-              className="px-3 py-2 bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors duration-200 disabled:bg-stone-300 disabled:cursor-not-allowed flex items-center space-x-1"
-              title="朗读当前句子"
+              className={`px-3 py-2 font-medium transition-all duration-200 disabled:cursor-not-allowed flex items-center space-x-1 ${
+                hotkeyPressed 
+                  ? 'bg-emerald-600 text-white scale-105 shadow-lg' 
+                  : 'bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-stone-300'
+              }`}
+              title="朗读当前句子 (快捷键: 空格键 - 播放/暂停)"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12 6.5z" />
               </svg>
               <span className="text-sm">朗读句子</span>
+              <span className="text-xs opacity-75 ml-1">空格</span>
             </button>
 
             <button
