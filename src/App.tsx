@@ -127,13 +127,22 @@ function App() {
           }
           
           if (isDictationMode) {
-            // In dictation mode, set this sentence for dictation
-            setDictationSentenceIndex(sentenceIndex);
-            speech.jumpToSentence(sentenceIndex);
-            // Still speak the sentence for audio reference
-            setTimeout(() => {
-              speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
-            }, 100);
+            // Check if clicking on the currently active dictation sentence
+            if (dictationSentenceIndex === sentenceIndex) {
+              // Just speak the sentence without changing dictation state
+              // This preserves focus on the input field
+              setTimeout(() => {
+                speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+              }, 100);
+            } else {
+              // Set this sentence for dictation (different sentence)
+              setDictationSentenceIndex(sentenceIndex);
+              speech.jumpToSentence(sentenceIndex);
+              // Still speak the sentence for audio reference
+              setTimeout(() => {
+                speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+              }, 100);
+            }
           } else {
             // Normal mode - navigate to sentence and speak it
             speech.jumpToSentence(sentenceIndex);
@@ -145,7 +154,7 @@ function App() {
         }
       }
     },
-    [speech, isDictationMode]
+    [speech, isDictationMode, dictationSentenceIndex]
   );
 
   // Combined click handler
@@ -302,12 +311,25 @@ function App() {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Only trigger on spacebar and when not typing in an input field
       const target = event.target as HTMLElement;
-      const isInputField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.contentEditable === 'true';
+      
+      // More comprehensive input field detection
+      const isInputField = 
+        (target?.tagName === 'INPUT' && !target?.classList.contains('opacity-0')) || 
+        target?.tagName === 'TEXTAREA' || 
+        target?.contentEditable === 'true';
       
       // Check for both Space code and space key
       if ((event.code === 'Space' || event.key === ' ') && !isInputField) {
         event.preventDefault();
         event.stopPropagation();
+        
+        console.debug('Space hotkey triggered', {
+          target: target?.tagName,
+          isInputField,
+          hasOpacity0: target?.classList.contains('opacity-0'),
+          isSpeaking: speech.isSpeaking,
+          sentencesLength: speech.sentences.length
+        });
         
         // If speaking, stop playback
         if (speech.isSpeaking) {
