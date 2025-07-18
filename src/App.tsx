@@ -26,6 +26,9 @@ function App() {
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
   const [dictionaryData, setDictionaryData] = useState<DictionaryEntry | null>(null);
+  
+  // Hotkey feedback state
+  const [hotkeyPressed, setHotkeyPressed] = useState(false);
 
   // Speech hook - single source of truth for text and speech state
   const speech = useSpeech();
@@ -294,6 +297,41 @@ function App() {
     }
   }, [savedTextsLoading, storedTexts.length, handleTextUpdate, speech.originalText]);
 
+  // Global hotkey for playing current sentence
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only trigger on spacebar and when not typing in an input field
+      const target = event.target as HTMLElement;
+      const isInputField = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.contentEditable === 'true';
+      
+      // Check for both Space code and space key
+      if ((event.code === 'Space' || event.key === ' ') && !isInputField) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // If speaking, stop playback
+        if (speech.isSpeaking) {
+          setHotkeyPressed(true);
+          setTimeout(() => setHotkeyPressed(false), 200);
+          speech.stop();
+        }
+        // If not speaking and there are sentences, start speaking current sentence
+        else if (speech.sentences.length > 0) {
+          // Visual feedback for hotkey press
+          setHotkeyPressed(true);
+          setTimeout(() => setHotkeyPressed(false), 200);
+          
+          handleSpeakCurrentSentence();
+        } else {
+          console.debug('Space hotkey Not triggering - no sentences available');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true); // Use capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [speech.sentences.length, speech.isSpeaking, handleSpeakCurrentSentence]);
+
   if (!speech.isSupported) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
@@ -329,6 +367,7 @@ function App() {
         onToggleSettings={handleToggleSettings}
         isDictationMode={isDictationMode}
         onToggleDictationMode={handleToggleDictationMode}
+        hotkeyPressed={hotkeyPressed}
       />
 
       <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">

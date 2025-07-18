@@ -29,7 +29,7 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
   return (
     <div className={sentenceClass} data-sentence-index={sentenceIndex}>
       {isActive ? (
-        <div className="dictation-active-sentence p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+        <div className="dictation-active-sentence p-4 rounded-lg">
           <DictationInput
             targetText={sentence}
             sentenceIndex={sentenceIndex}
