@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DictionaryEntry } from '../types/index';
-import { ecdictService } from '../data/ecdictService';
+import { ecdictService } from '../services/ecdictService';
 
 export const useDictionary = () => {
   const [loading, setLoading] = useState(false);
