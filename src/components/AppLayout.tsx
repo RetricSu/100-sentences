@@ -3,7 +3,6 @@ import { Header } from './Header';
 import { SettingsPanel } from './SettingsPanel';
 import { DictionaryPopup } from './DictionaryPopup';
 import { TextRenderer } from './TextRenderer';
-import { VoiceOption } from '../types/index';
 
 interface AppLayoutProps {
   // Header props
@@ -23,23 +22,11 @@ interface AppLayoutProps {
   onToggleDictationMode: () => void;
   hotkeyPressed: boolean;
 
-  // Settings props
+  // Settings props (simplified)
   showSettings: boolean;
   onTextUpdate: (text: string) => void;
   defaultText: string;
   displayText: string;
-  savedTexts: any[];
-  savedTextsLoading: boolean;
-  onLoadText: (savedText: any) => void;
-  onDeleteText: (id: string) => void;
-  onClearAllTexts: () => void;
-  onSaveText: (text: string, title?: string) => void;
-  voices: VoiceOption[];
-  selectedVoice: SpeechSynthesisVoice | null;
-  onVoiceChange: (voice: SpeechSynthesisVoice) => void;
-  rate: number;
-  onRateChange: (rate: number) => void;
-  onClearDictationInputs: () => void;
 
   // Text renderer props
   processedHtml: string;
@@ -79,23 +66,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onToggleDictationMode,
   hotkeyPressed,
 
-  // Settings props
+  // Settings props (simplified)
   showSettings,
   onTextUpdate,
   defaultText,
   displayText,
-  savedTexts,
-  savedTextsLoading,
-  onLoadText,
-  onDeleteText,
-  onClearAllTexts,
-  onSaveText,
-  voices,
-  selectedVoice,
-  onVoiceChange,
-  rate,
-  onRateChange,
-  onClearDictationInputs,
 
   // Text renderer props
   processedHtml,
@@ -149,18 +124,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               onTextUpdate={onTextUpdate}
               defaultText={defaultText}
               displayText={displayText}
-              savedTexts={savedTexts}
-              savedTextsLoading={savedTextsLoading}
-              onLoadText={onLoadText}
-              onDeleteText={onDeleteText}
-              onClearAllTexts={onClearAllTexts}
-              onSaveText={onSaveText}
-              voices={voices}
-              selectedVoice={selectedVoice}
-              onVoiceChange={onVoiceChange}
-              rate={rate}
-              onRateChange={onRateChange}
-              onClearDictationInputs={onClearDictationInputs}
             />
           </div>
         </div>

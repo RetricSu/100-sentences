@@ -24,7 +24,7 @@ function App() {
   } = useDictionary();
 
   // Dictation storage hook
-  const { clearAllDictationInputs, getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
+  const { getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
   
   // App state management
   const appState = useAppState();
@@ -120,33 +120,12 @@ function App() {
     }));
   }, []);
 
-  // Clear all dictation inputs
-  const handleClearDictationInputs = useCallback(() => {
-    if (
-      confirm(
-        "Are you sure you want to clear all dictation progress? This action cannot be undone."
-      )
-    ) {
-      clearAllDictationInputs();
-    }
-  }, [clearAllDictationInputs]);
-
   // Sync dictation inputs in real-time
   useEffect(() => {
     if (isDictationStorageLoaded) {
       setDictationInputs(getAllDictationInputs());
     }
   }, [isDictationStorageLoaded, getAllDictationInputs, appState.dictationSentenceIndex, appState.isDictationMode]);
-
-  // Auto-load latest saved text on app initialization
-  useEffect(() => {
-    textManagement.autoLoadLatestText();
-  }, [textManagement]);
-
-  // Initialize with default text if no saved texts
-  useEffect(() => {
-    textManagement.initializeWithDefaultText();
-  }, [textManagement]);
 
   // Global hotkey for playing current sentence
   useEffect(() => {
@@ -194,23 +173,11 @@ function App() {
       onToggleDictationMode={appState.toggleDictationMode}
       hotkeyPressed={appState.hotkeyPressed}
 
-      // Settings props
+      // Settings props (simplified)
       showSettings={appState.showSettings}
       onTextUpdate={textManagement.handleTextUpdate}
       defaultText={textManagement.defaultText}
       displayText={speech.originalText}
-      savedTexts={textManagement.storedTexts}
-      savedTextsLoading={textManagement.savedTextsLoading}
-      onLoadText={textManagement.handleLoadText}
-      onDeleteText={textManagement.handleDeleteText}
-      onClearAllTexts={textManagement.handleClearAllTexts}
-      onSaveText={textManagement.handleSaveText}
-      voices={speech.voices}
-      selectedVoice={speech.selectedVoice}
-      onVoiceChange={speech.setSelectedVoice}
-      rate={speech.rate}
-      onRateChange={speech.setRate}
-      onClearDictationInputs={handleClearDictationInputs}
 
       // Text renderer props
       processedHtml={textManagement.processedHtml}
