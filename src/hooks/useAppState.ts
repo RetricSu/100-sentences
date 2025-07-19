@@ -10,6 +10,18 @@ export interface AppState {
   hotkeyPressed: boolean;
 }
 
+export interface AppStateActions {
+  toggleSettings: () => void;
+  toggleDictationMode: () => void;
+  setDictationSentence: (index: number | null) => void;
+  showDictionary: (word: string) => void;
+  hideDictionary: () => void;
+  setDictionaryDataValue: (data: any) => void;
+  setHotkeyFeedback: (pressed: boolean) => void;
+}
+
+export type UseAppStateReturn = AppState & AppStateActions;
+
 export const useAppState = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isDictationMode, setIsDictationMode] = useState(false);

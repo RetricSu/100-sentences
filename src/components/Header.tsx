@@ -1,74 +1,41 @@
 import React from "react";
+import { useHeader } from "../hooks/useHeader";
+import { UseAppStateReturn } from "../hooks/useAppState";
 
 interface HeaderProps {
-  // Dictionary status
-  dictionaryLoaded: boolean;
-  dictionarySize: number;
-  isDictionaryLoading: boolean;
-  loadingProgress: number;
-
-  // Sentence navigation
-  sentences: string[];
-  currentSentenceIndex: number;
-  onSentenceNavigate: (index: number) => void;
-  onSpeakCurrentSentence: () => void;
-
-  // Reading controls
-  isSpeaking: boolean;
-  hasText: boolean;
-  onToggleReading: () => void;
-
-  // Settings
-  onToggleSettings: () => void;
-
-  // Dictation mode
-  isDictationMode: boolean;
-  onToggleDictationMode: () => void;
-  
-  // Hotkey feedback
-  hotkeyPressed?: boolean;
+  appState: UseAppStateReturn;
+  speech: any;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  dictionaryLoaded,
-  dictionarySize,
-  isDictionaryLoading,
-  loadingProgress,
-  sentences,
-  currentSentenceIndex,
-  onSentenceNavigate,
-  onSpeakCurrentSentence,
-  isSpeaking,
-  hasText,
-  onToggleReading,
-  onToggleSettings,
-  isDictationMode,
-  onToggleDictationMode,
-  hotkeyPressed = false,
-}) => {
-  const handlePreviousSentence = () => {
-    if (currentSentenceIndex > 0) {
-      onSentenceNavigate(currentSentenceIndex - 1);
-    }
-  };
-
-  const handleNextSentence = () => {
-    if (currentSentenceIndex < sentences.length - 1) {
-      onSentenceNavigate(currentSentenceIndex + 1);
-    }
-  };
-
-  const handleStopReading = () => {
-    if (isSpeaking) {
-      onToggleReading();
-    }
-  };
-
-  const handleStartReading = () => {
-    if (!isSpeaking) {
-      onToggleReading();
-    }
-  };
+export const Header: React.FC<HeaderProps> = ({ appState, speech }) => {
+  // Use the internalized header management hook
+  const {
+    // Dictionary status
+    dictionaryLoaded,
+    dictionarySize,
+    isDictionaryLoading,
+    loadingProgress,
+    
+    // Sentence navigation
+    sentences,
+    currentSentenceIndex,
+    handlePreviousSentence,
+    handleNextSentence,
+    handleSpeakCurrentSentence,
+    
+    // Reading controls
+    isSpeaking,
+    hasText,
+    handleStopReading,
+    handleStartReading,
+    
+    // Dictation mode
+    isDictationMode,
+    
+    // Toggle functions
+    onToggleSettings,
+    onToggleDictationMode,
+  } = useHeader({ appState, speech });
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
@@ -129,13 +96,9 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
-              onClick={onSpeakCurrentSentence}
+              onClick={handleSpeakCurrentSentence}
               disabled={sentences.length === 0 || isSpeaking}
-              className={`px-3 py-2 font-medium transition-all duration-200 disabled:cursor-not-allowed flex items-center space-x-1 ${
-                hotkeyPressed 
-                  ? 'bg-emerald-600 text-white scale-105 shadow-lg' 
-                  : 'bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-stone-300'
-              }`}
+              className="px-3 py-2 font-medium transition-all duration-200 disabled:cursor-not-allowed flex items-center space-x-1 bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-stone-300"
               title="朗读当前句子 (快捷键: 空格键 - 播放/暂停)"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"

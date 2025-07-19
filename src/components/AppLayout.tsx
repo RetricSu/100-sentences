@@ -3,24 +3,14 @@ import { Header } from './Header';
 import { SettingsPanel } from './SettingsPanel';
 import { DictionaryPopup } from './DictionaryPopup';
 import { TextRenderer } from './TextRenderer';
+import { UseAppStateReturn } from '../hooks/useAppState';
 
 interface AppLayoutProps {
-  // Header props
-  dictionaryLoaded: boolean;
-  dictionarySize: number;
-  isDictionaryLoading: boolean;
-  loadingProgress: number;
-  sentences: string[];
-  currentSentenceIndex: number;
-  onSentenceNavigate: (index: number) => void;
-  onSpeakCurrentSentence: () => void;
-  isSpeaking: boolean;
-  hasText: boolean;
-  onToggleReading: () => void;
-  onToggleSettings: () => void;
-  isDictationMode: boolean;
-  onToggleDictationMode: () => void;
-  hotkeyPressed: boolean;
+  // App state
+  appState: UseAppStateReturn;
+
+  // Speech instance
+  speech: any;
 
   // Settings props (simplified)
   showSettings: boolean;
@@ -29,8 +19,8 @@ interface AppLayoutProps {
   displayText: string;
 
   // Text renderer props
+  isDictationMode: boolean;
   processedHtml: string;
-  speech: any;
   dictationSentenceIndex: number | null;
   dictationInputs: Record<string, string>;
   realTimeInputs: Record<string, string>;
@@ -49,22 +39,11 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
-  // Header props
-  dictionaryLoaded,
-  dictionarySize,
-  isDictionaryLoading,
-  loadingProgress,
-  sentences,
-  currentSentenceIndex,
-  onSentenceNavigate,
-  onSpeakCurrentSentence,
-  isSpeaking,
-  hasText,
-  onToggleReading,
-  onToggleSettings,
-  isDictationMode,
-  onToggleDictationMode,
-  hotkeyPressed,
+  // App state
+  appState,
+
+  // Speech instance
+  speech,
 
   // Settings props (simplified)
   showSettings,
@@ -73,8 +52,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   displayText,
 
   // Text renderer props
+  isDictationMode,
   processedHtml,
-  speech,
   dictationSentenceIndex,
   dictationInputs,
   realTimeInputs,
@@ -94,23 +73,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
       {/* Header */}
-      <Header
-        dictionaryLoaded={dictionaryLoaded}
-        dictionarySize={dictionarySize}
-        isDictionaryLoading={isDictionaryLoading}
-        loadingProgress={loadingProgress}
-        sentences={sentences}
-        currentSentenceIndex={currentSentenceIndex}
-        onSentenceNavigate={onSentenceNavigate}
-        onSpeakCurrentSentence={onSpeakCurrentSentence}
-        isSpeaking={isSpeaking}
-        hasText={hasText}
-        onToggleReading={onToggleReading}
-        onToggleSettings={onToggleSettings}
-        isDictationMode={isDictationMode}
-        onToggleDictationMode={onToggleDictationMode}
-        hotkeyPressed={hotkeyPressed}
-      />
+      <Header appState={appState} speech={speech} />
 
       <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
         {/* Settings Sidebar */}

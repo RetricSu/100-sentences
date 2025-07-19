@@ -17,10 +17,6 @@ function App() {
     lookupWord,
     loading: dictionaryLoading,
     error: dictionaryError,
-    dictionaryLoaded,
-    dictionarySize,
-    loadingProgress,
-    isLoading: isDictionaryLoading,
   } = useDictionary();
 
   // Dictation storage hook
@@ -71,36 +67,6 @@ function App() {
     [handleWordClick, eventHandlers]
   );
 
-  // Header control handlers
-  const handleSentenceNavigate = useCallback(
-    (index: number) => {
-      if (speech.isSpeaking) {
-        speech.stop();
-      }
-      speech.jumpToSentence(index);
-    },
-    [speech]
-  );
-
-  const handleSpeakCurrentSentence = useCallback(() => {
-    if (speech.isSpeaking) {
-      speech.stop();
-      setTimeout(() => {
-        speech.speakCurrentSentence();
-      }, 100);
-    } else {
-      speech.speakCurrentSentence();
-    }
-  }, [speech]);
-
-  const handleToggleReading = useCallback(() => {
-    if (speech.isSpeaking) {
-      speech.stop();
-    } else {
-      speech.speakAll(speech.currentSentenceIndex);
-    }
-  }, [speech]);
-
   const handleDictationComplete = useCallback(() => {
     // Auto-advance to next sentence or reset
     if (appState.dictationSentenceIndex !== null && appState.dictationSentenceIndex < speech.sentences.length - 1) {
@@ -126,6 +92,13 @@ function App() {
       setDictationInputs(getAllDictationInputs());
     }
   }, [isDictationStorageLoaded, getAllDictationInputs, appState.dictationSentenceIndex, appState.isDictationMode]);
+
+  // Initialize with default text if no text is loaded
+  useEffect(() => {
+    if (!speech.originalText.trim() && textManagement.defaultText.trim()) {
+      textManagement.handleTextUpdate(textManagement.defaultText);
+    }
+  }, [speech.originalText, textManagement]);
 
   // Global hotkey for playing current sentence
   useEffect(() => {
@@ -156,22 +129,11 @@ function App() {
 
   return (
     <AppLayout
-      // Header props
-      dictionaryLoaded={dictionaryLoaded}
-      dictionarySize={dictionarySize}
-      isDictionaryLoading={isDictionaryLoading}
-      loadingProgress={loadingProgress}
-      sentences={speech.sentences}
-      currentSentenceIndex={speech.currentSentenceIndex}
-      onSentenceNavigate={handleSentenceNavigate}
-      onSpeakCurrentSentence={handleSpeakCurrentSentence}
-      isSpeaking={speech.isSpeaking}
-      hasText={speech.originalText.trim().length > 0}
-      onToggleReading={handleToggleReading}
-      onToggleSettings={appState.toggleSettings}
-      isDictationMode={appState.isDictationMode}
-      onToggleDictationMode={appState.toggleDictationMode}
-      hotkeyPressed={appState.hotkeyPressed}
+      // App state
+      appState={appState}
+
+      // Speech instance
+      speech={speech}
 
       // Settings props (simplified)
       showSettings={appState.showSettings}
@@ -180,8 +142,8 @@ function App() {
       displayText={speech.originalText}
 
       // Text renderer props
+      isDictationMode={appState.isDictationMode}
       processedHtml={textManagement.processedHtml}
-      speech={speech}
       dictationSentenceIndex={appState.dictationSentenceIndex}
       dictationInputs={dictationInputs}
       realTimeInputs={realTimeInputs}
