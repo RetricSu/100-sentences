@@ -148,13 +148,9 @@ function App() {
       onDictationComplete={handleDictationComplete}
       onClick={handleClick}
 
-      // Dictionary popup props
-      currentWord={appState.currentWord}
-      dictionaryData={appState.dictionaryData}
+      // Dictionary popup props (simplified)
       dictionaryLoading={dictionaryLoading}
       dictionaryError={dictionaryError}
-      dictionaryVisible={appState.dictionaryVisible}
-      onCloseDictionary={appState.hideDictionary}
       onSpeak={speech.speak}
     />
   );

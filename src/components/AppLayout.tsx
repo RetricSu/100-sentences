@@ -25,13 +25,9 @@ interface AppLayoutProps {
   onDictationComplete: () => void;
   onClick: (event: React.MouseEvent) => void;
 
-  // Dictionary popup props
-  currentWord: string;
-  dictionaryData: any;
+  // Dictionary popup props (simplified)
   dictionaryLoading: boolean;
   dictionaryError: string | null;
-  dictionaryVisible: boolean;
-  onCloseDictionary: () => void;
   onSpeak: (text: string) => void;
 }
 
@@ -55,13 +51,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onDictationComplete,
   onClick,
 
-  // Dictionary popup props
-  currentWord,
-  dictionaryData,
+  // Dictionary popup props (simplified)
   dictionaryLoading,
   dictionaryError,
-  dictionaryVisible,
-  onCloseDictionary,
   onSpeak,
 }) => {
   return (
@@ -97,12 +89,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
       {/* Dictionary Popup */}
       <DictionaryPopup
-        word={currentWord}
-        data={dictionaryData}
         loading={dictionaryLoading}
         error={dictionaryError}
-        isVisible={dictionaryVisible}
-        onClose={onCloseDictionary}
         onSpeak={onSpeak}
       />
     </div>

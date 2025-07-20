@@ -1,25 +1,22 @@
 import React from 'react';
-import { DictionaryEntry } from '../types/index';
+import { useAppStateContext } from '../contexts/AppStateContext';
 
 interface DictionaryPopupProps {
-  word: string;
-  data: DictionaryEntry | null;
   loading: boolean;
   error: string | null;
-  isVisible: boolean;
-  onClose: () => void;
   onSpeak: (text: string) => void;
 }
 
 export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
-  word,
-  data,
   loading,
   error,
-  isVisible,
-  onClose,
   onSpeak,
 }) => {
+  const appState = useAppStateContext();
+  
+  // Get values from context
+  const { currentWord: word, dictionaryData: data, dictionaryVisible: isVisible, hideDictionary: onClose } = appState;
+
   if (!isVisible) return null;
 
   return (
@@ -85,7 +82,7 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="text-sm font-medium text-amber-800 mb-2">中文翻译</div>
                 <div className="text-base text-amber-900 leading-relaxed">
-                  {data.chinese.split('\n').map((line, index) => (
+                  {data.chinese.split('\n').map((line: string, index: number) => (
                     <div key={index} className="mb-1">{line}</div>
                   ))}
                 </div>
@@ -95,7 +92,7 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
             {/* English Meanings */}
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-stone-700">英文释义</h4>
-              {data.meanings.map((meaning, index) => (
+              {data.meanings.map((meaning: any, index: number) => (
                 <div key={index} className="space-y-1">
                   <div className="flex items-start gap-2">
                     <span className="font-semibold text-emerald-600 text-sm">{meaning.partOfSpeech}</span>
