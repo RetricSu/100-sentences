@@ -18,11 +18,6 @@ interface AppLayoutProps {
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
   onDictationComplete: () => void;
   onClick: (event: React.MouseEvent) => void;
-
-  // Dictionary popup props (simplified)
-  dictionaryLoading: boolean;
-  dictionaryError: string | null;
-  onSpeak: (text: string) => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -39,11 +34,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onRealTimeInputUpdate,
   onDictationComplete,
   onClick,
-
-  // Dictionary popup props (simplified)
-  dictionaryLoading,
-  dictionaryError,
-  onSpeak,
 }) => {
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
@@ -74,11 +64,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       </div>
 
       {/* Dictionary Popup */}
-      <DictionaryPopup
-        loading={dictionaryLoading}
-        error={dictionaryError}
-        onSpeak={onSpeak}
-      />
+      <DictionaryPopup />
     </div>
   );
 }; 

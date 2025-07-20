@@ -1,18 +1,12 @@
 import React from 'react';
 import { useAppStateContext } from '../contexts/AppStateContext';
+import { useDictionaryContext } from '../contexts/DictionaryContext';
+import { useSpeechContext } from '../contexts/SpeechContext';
 
-interface DictionaryPopupProps {
-  loading: boolean;
-  error: string | null;
-  onSpeak: (text: string) => void;
-}
-
-export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
-  loading,
-  error,
-  onSpeak,
-}) => {
+export const DictionaryPopup: React.FC = () => {
   const appState = useAppStateContext();
+  const dictionary = useDictionaryContext();
+  const speech = useSpeechContext();
   
   // Get values from context
   const { currentWord: word, dictionaryData: data, dictionaryVisible: isVisible, hideDictionary: onClose } = appState;
@@ -38,21 +32,21 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
         </button>
 
         {/* Content */}
-        {loading && (
+        {dictionary.loading && (
           <div className="text-sky-500 text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto mb-3"></div>
             查找中...
           </div>
         )}
 
-        {error && (
+        {dictionary.error && (
           <div className="text-rose-500 text-center py-4">
             <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            {error}
+            {dictionary.error}
           </div>
         )}
 
@@ -62,7 +56,7 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <div className="text-2xl font-bold text-stone-800">{word}</div>
               <button
-                onClick={() => onSpeak(word)}
+                onClick={() => speech.speak(word)}
                 className="btn-primary p-2 text-sm"
                 title="播放发音"
               >

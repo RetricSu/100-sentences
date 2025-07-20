@@ -16,11 +16,7 @@ function App() {
   const speech = useSpeechContext();
 
   // Get dictionary from context
-  const {
-    lookupWord,
-    loading: dictionaryLoading,
-    error: dictionaryError,
-  } = useDictionaryContext();
+  const { lookupWord } = useDictionaryContext();
 
   // Dictation storage hook
   const { getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
@@ -141,11 +137,6 @@ function App() {
       onRealTimeInputUpdate={handleRealTimeInputUpdate}
       onDictationComplete={handleDictationComplete}
       onClick={handleClick}
-
-      // Dictionary popup props (simplified)
-      dictionaryLoading={dictionaryLoading}
-      dictionaryError={dictionaryError}
-      onSpeak={speech.speak}
     />
   );
 }
