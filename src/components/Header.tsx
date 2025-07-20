@@ -1,38 +1,12 @@
 import React from "react";
-import { useHeader } from "../hooks/useHeader";
 import { useAppStateContext } from "../contexts/AppStateContext";
+import { useSpeechContext } from "../contexts/SpeechContext";
+import { useDictionaryContext } from "../contexts/DictionaryContext";
 
 export const Header: React.FC = () => {
   const appState = useAppStateContext();
-  
-  // Use the internalized header management hook
-  const {
-    // Dictionary status
-    dictionaryLoaded,
-    dictionarySize,
-    isDictionaryLoading,
-    loadingProgress,
-    
-    // Sentence navigation
-    sentences,
-    currentSentenceIndex,
-    handlePreviousSentence,
-    handleNextSentence,
-    handleSpeakCurrentSentence,
-    
-    // Reading controls
-    isSpeaking,
-    hasText,
-    handleStopReading,
-    handleStartReading,
-    
-    // Dictation mode
-    isDictationMode,
-    
-    // Toggle functions
-    onToggleSettings,
-    onToggleDictationMode,
-  } = useHeader({ appState });
+  const speech = useSpeechContext();
+  const dictionary = useDictionaryContext();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
@@ -43,8 +17,8 @@ export const Header: React.FC = () => {
             {/* Previous/Next buttons */}
             <div className="flex items-center gap-2">
               <button
-                onClick={handlePreviousSentence}
-                disabled={currentSentenceIndex === 0}
+                onClick={() => speech.jumpToSentence(speech.currentSentenceIndex - 1)}
+                disabled={speech.currentSentenceIndex === 0}
                 className="p-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Previous sentence"
               >
@@ -54,8 +28,8 @@ export const Header: React.FC = () => {
               </button>
               
               <button
-                onClick={handleNextSentence}
-                disabled={currentSentenceIndex === sentences.length - 1}
+                onClick={() => speech.jumpToSentence(speech.currentSentenceIndex + 1)}
+                disabled={speech.currentSentenceIndex === speech.sentences.length - 1}
                 className="p-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Next sentence"
               >
@@ -67,13 +41,13 @@ export const Header: React.FC = () => {
 
             {/* Current sentence indicator */}
             <div className="text-sm text-stone-500">
-              {sentences.length > 0 ? `${currentSentenceIndex + 1} / ${sentences.length}` : 'No text'}
+              {speech.sentences.length > 0 ? `${speech.currentSentenceIndex + 1} / ${speech.sentences.length}` : 'No text'}
             </div>
 
             {/* Play current sentence button */}
             <button
-              onClick={handleSpeakCurrentSentence}
-              disabled={!hasText}
+              onClick={() => speech.speakCurrentSentence()}
+              disabled={!speech.originalText.trim()}
               className="p-2 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Play current sentence"
             >
@@ -86,9 +60,9 @@ export const Header: React.FC = () => {
           {/* Center - Reading controls */}
           <div className="flex items-center gap-3">
             {/* Play/Stop button */}
-            {isSpeaking ? (
+            {speech.isSpeaking ? (
               <button
-                onClick={handleStopReading}
+                onClick={() => speech.stop()}
                 className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,8 +72,8 @@ export const Header: React.FC = () => {
               </button>
             ) : (
               <button
-                onClick={handleStartReading}
-                disabled={!hasText}
+                onClick={() => speech.speakAll(speech.currentSentenceIndex)}
+                disabled={!speech.originalText.trim()}
                 className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,9 +88,9 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Dictation mode toggle */}
             <button
-              onClick={onToggleDictationMode}
+              onClick={appState.toggleDictationMode}
               className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                isDictationMode
+                appState.isDictationMode
                   ? 'bg-purple-500 text-white hover:bg-purple-600'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
@@ -130,7 +104,7 @@ export const Header: React.FC = () => {
 
             {/* Settings button */}
             <button
-              onClick={onToggleSettings}
+              onClick={appState.toggleSettings}
               className="p-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors"
               title="Settings"
             >
@@ -142,17 +116,17 @@ export const Header: React.FC = () => {
 
             {/* Dictionary status indicator */}
             <div className="flex items-center gap-2 text-sm">
-              {isDictionaryLoading ? (
+              {dictionary.isLoading ? (
                 <div className="flex items-center gap-2 text-amber-600">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600"></div>
-                  <span>Loading dictionary... {loadingProgress}%</span>
+                  <span>Loading dictionary... {dictionary.loadingProgress}%</span>
                 </div>
-              ) : dictionaryLoaded ? (
+              ) : dictionary.dictionaryLoaded ? (
                 <div className="flex items-center gap-2 text-green-600">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Dictionary ready ({dictionarySize.toLocaleString()} words)</span>
+                  <span>Dictionary ready ({dictionary.dictionarySize.toLocaleString()} words)</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-red-600">
