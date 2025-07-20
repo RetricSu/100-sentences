@@ -17,7 +17,6 @@ interface AppLayoutProps {
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
   onDictationComplete: () => void;
-  onClick: (event: React.MouseEvent) => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
@@ -33,7 +32,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   realTimeInputs,
   onRealTimeInputUpdate,
   onDictationComplete,
-  onClick,
 }) => {
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
@@ -49,7 +47,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             realTimeInputs={realTimeInputs}
             onRealTimeInputUpdate={onRealTimeInputUpdate}
             onDictationComplete={onDictationComplete}
-            onClick={onClick}
           />
         </div>
 

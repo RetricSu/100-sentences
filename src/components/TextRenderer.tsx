@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { DictationSentenceRenderer } from './DictationSentenceRenderer';
 import { useAppStateContext } from '../contexts/AppStateContext';
 import { useSpeechContext } from '../contexts/SpeechContext';
+import { useEventHandlersContext } from '../contexts/EventHandlersContext';
 
 interface TextRendererProps {
   processedHtml: string;
@@ -9,7 +10,6 @@ interface TextRendererProps {
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
   onDictationComplete: () => void;
-  onClick: (event: React.MouseEvent) => void;
 }
 
 export const TextRenderer: React.FC<TextRendererProps> = ({
@@ -18,10 +18,10 @@ export const TextRenderer: React.FC<TextRendererProps> = ({
   realTimeInputs,
   onRealTimeInputUpdate,
   onDictationComplete,
-  onClick,
 }) => {
   const appState = useAppStateContext();
   const speech = useSpeechContext();
+  const eventHandlers = useEventHandlersContext();
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Get values from context
@@ -32,7 +32,7 @@ export const TextRenderer: React.FC<TextRendererProps> = ({
     return (
       <div
         ref={contentRef}
-        onClick={onClick}
+        onClick={eventHandlers.handleClick}
         className="prose-reading text-stone-800"
       >
         <DictationSentenceRenderer
@@ -53,7 +53,7 @@ export const TextRenderer: React.FC<TextRendererProps> = ({
   return (
     <div
       ref={contentRef}
-      onClick={onClick}
+      onClick={eventHandlers.handleClick}
       dangerouslySetInnerHTML={{
         __html: processedHtml,
       }}

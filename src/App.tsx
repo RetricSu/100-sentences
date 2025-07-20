@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDictationStorage } from "./hooks/useDictationStorage";
-import { useEventHandlers } from "./hooks/useEventHandlers";
 import { useTextManagement } from "./hooks/useTextManagement";
 import { AppLayout } from "./components/AppLayout";
 import { DictationDisplayUtils } from "./utils/dictationDisplay";
 import { useAppStateContext } from "./contexts/AppStateContext";
 import { useSpeechContext } from "./contexts/SpeechContext";
-import { useDictionaryContext } from "./contexts/DictionaryContext";
+import { useEventHandlersContext } from "./contexts/EventHandlersContext";
 
 function App() {
   // Get app state from context
@@ -15,8 +14,8 @@ function App() {
   // Get speech from context
   const speech = useSpeechContext();
 
-  // Get dictionary from context
-  const { lookupWord } = useDictionaryContext();
+  // Get event handlers from context
+  const eventHandlers = useEventHandlersContext();
 
   // Dictation storage hook
   const { getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
@@ -26,51 +25,11 @@ function App() {
     isDictationMode: appState.isDictationMode,
   });
 
-  // Event handlers
-  const eventHandlers = useEventHandlers({
-    speech,
-    isDictationMode: appState.isDictationMode,
-    dictationSentenceIndex: appState.dictationSentenceIndex,
-    appState: {
-      showDictionary: appState.showDictionary,
-      setDictationSentence: appState.setDictationSentence,
-      setHotkeyFeedback: appState.setHotkeyFeedback,
-    },
-    lookupWord,
-  });
-
   // Reactive state for dictation inputs to ensure real-time updates
   const [dictationInputs, setDictationInputs] = useState<Record<string, string>>({});
   
   // Real-time typed text for all sentences (not just the active one)
   const [realTimeInputs, setRealTimeInputs] = useState<Record<string, string>>({});
-
-  // Handle word click with dictionary lookup
-  const handleWordClick = useCallback(async (event: React.MouseEvent) => {
-    const result = await eventHandlers.handleWordClick(event);
-    if (result) {
-      appState.setDictionaryDataValue(result);
-    }
-  }, [eventHandlers, appState]);
-
-  // Combined click handler
-  const handleClick = useCallback(
-    (event: React.MouseEvent) => {
-      handleWordClick(event);
-      eventHandlers.handleSentenceClick(event);
-    },
-    [handleWordClick, eventHandlers]
-  );
-
-  const handleDictationComplete = useCallback(() => {
-    // Auto-advance to next sentence or reset
-    if (appState.dictationSentenceIndex !== null && appState.dictationSentenceIndex < speech.sentences.length - 1) {
-      appState.setDictationSentence(appState.dictationSentenceIndex + 1);
-      speech.jumpToSentence(appState.dictationSentenceIndex + 1);
-    } else {
-      appState.setDictationSentence(null);
-    }
-  }, [appState.dictationSentenceIndex, speech, appState]);
 
   // Handle real-time input updates for all sentences
   const handleRealTimeInputUpdate = useCallback((sentence: string, sentenceIndex: number, input: string) => {
@@ -80,6 +39,10 @@ function App() {
       [sentenceId]: input
     }));
   }, []);
+
+  const handleDictationComplete = useCallback(() => {
+    eventHandlers.handleDictationComplete();
+  }, [eventHandlers]);
 
   // Sync dictation inputs in real-time
   useEffect(() => {
@@ -94,16 +57,6 @@ function App() {
       textManagement.handleTextUpdate(textManagement.defaultText);
     }
   }, [speech.originalText, textManagement]);
-
-  // Global hotkey for playing current sentence
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      eventHandlers.handleKeyDown(event);
-    };
-
-    window.addEventListener('keydown', handleKeyDown, true); // Use capture phase
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [eventHandlers]);
 
   if (!speech.isSupported) {
     return (
@@ -136,7 +89,6 @@ function App() {
       realTimeInputs={realTimeInputs}
       onRealTimeInputUpdate={handleRealTimeInputUpdate}
       onDictationComplete={handleDictationComplete}
-      onClick={handleClick}
     />
   );
 }

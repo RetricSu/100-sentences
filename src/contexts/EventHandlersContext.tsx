@@ -1,25 +1,38 @@
-import { useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useEffect } from 'react';
 import { TextProcessor } from '../services/textProcessor';
+import { useAppStateContext } from './AppStateContext';
+import { useSpeechContext } from './SpeechContext';
+import { useDictionaryContext } from './DictionaryContext';
 
-interface UseEventHandlersProps {
-  speech: any;
-  isDictationMode: boolean;
-  dictationSentenceIndex: number | null;
-  appState: {
-    showDictionary: (word: string) => void;
-    setDictationSentence: (index: number | null) => void;
-    setHotkeyFeedback: (pressed: boolean) => void;
-  };
-  lookupWord: (word: string) => Promise<any>;
+interface EventHandlersContextType {
+  handleWordClick: (event: React.MouseEvent) => Promise<any>;
+  handleSentenceClick: (event: React.MouseEvent) => void;
+  handleClick: (event: React.MouseEvent) => void;
+  handleKeyDown: (event: KeyboardEvent) => void;
+  handleDictationComplete: () => void;
+  handleRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
 }
 
-export const useEventHandlers = ({
-  speech,
-  isDictationMode,
-  dictationSentenceIndex,
-  appState,
-  lookupWord,
-}: UseEventHandlersProps) => {
+const EventHandlersContext = createContext<EventHandlersContextType | null>(null);
+
+export const useEventHandlersContext = () => {
+  const context = useContext(EventHandlersContext);
+  if (!context) {
+    throw new Error('useEventHandlersContext must be used within EventHandlersProvider');
+  }
+  return context;
+};
+
+interface EventHandlersProviderProps {
+  children: React.ReactNode;
+}
+
+export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ children }) => {
+  const appState = useAppStateContext();
+  const speech = useSpeechContext();
+  const { lookupWord } = useDictionaryContext();
+
+  // Handle word click with dictionary lookup
   const handleWordClick = useCallback(
     async (event: React.MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -37,7 +50,7 @@ export const useEventHandlers = ({
         // Lookup word
         try {
           const result = await lookupWord(word);
-          // We'll need to handle this result in the parent component
+          appState.setDictionaryDataValue(result);
           return result;
         } catch (error) {
           console.error("Error looking up word:", error);
@@ -47,6 +60,7 @@ export const useEventHandlers = ({
     [speech, appState, lookupWord]
   );
 
+  // Handle sentence click
   const handleSentenceClick = useCallback(
     (event: React.MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -66,9 +80,9 @@ export const useEventHandlers = ({
             speech.stop();
           }
           
-          if (isDictationMode) {
+          if (appState.isDictationMode) {
             // Check if clicking on the currently active dictation sentence
-            if (dictationSentenceIndex === sentenceIndex) {
+            if (appState.dictationSentenceIndex === sentenceIndex) {
               // Just speak the sentence without changing dictation state
               // This preserves focus on the input field
               setTimeout(() => {
@@ -94,9 +108,10 @@ export const useEventHandlers = ({
         }
       }
     },
-    [speech, isDictationMode, dictationSentenceIndex, appState]
+    [speech, appState]
   );
 
+  // Combined click handler
   const handleClick = useCallback(
     (event: React.MouseEvent) => {
       handleWordClick(event);
@@ -105,6 +120,7 @@ export const useEventHandlers = ({
     [handleWordClick, handleSentenceClick]
   );
 
+  // Global keyboard event handler
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       // Only trigger on spacebar and when not typing in an input field
@@ -157,10 +173,41 @@ export const useEventHandlers = ({
     [speech, appState]
   );
 
-  return {
+  // Handle dictation completion
+  const handleDictationComplete = useCallback(() => {
+    // Auto-advance to next sentence or reset
+    if (appState.dictationSentenceIndex !== null && appState.dictationSentenceIndex < speech.sentences.length - 1) {
+      appState.setDictationSentence(appState.dictationSentenceIndex + 1);
+      speech.jumpToSentence(appState.dictationSentenceIndex + 1);
+    } else {
+      appState.setDictationSentence(null);
+    }
+  }, [appState.dictationSentenceIndex, speech, appState]);
+
+  // Handle real-time input updates for all sentences
+  const handleRealTimeInputUpdate = useCallback((_sentence: string, _sentenceIndex: number, _input: string) => {
+    // This is a placeholder - the actual implementation will be in the parent component
+    // that manages the real-time inputs state
+  }, []);
+
+  // Set up global keyboard event listener
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown, true); // Use capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [handleKeyDown]);
+
+  const value: EventHandlersContextType = {
     handleWordClick,
     handleSentenceClick,
     handleClick,
     handleKeyDown,
+    handleDictationComplete,
+    handleRealTimeInputUpdate,
   };
+
+  return (
+    <EventHandlersContext.Provider value={value}>
+      {children}
+    </EventHandlersContext.Provider>
+  );
 }; 
