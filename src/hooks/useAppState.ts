@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import useLocalStorageState from 'use-local-storage-state';
 
 export interface AppState {
   showSettings: boolean;
@@ -7,6 +8,7 @@ export interface AppState {
   currentWord: string;
   dictionaryData: any | null;
   hotkeyPressed: boolean;
+  lastSelectedText: string;
 }
 
 export interface AppStateActions {
@@ -16,6 +18,8 @@ export interface AppStateActions {
   hideDictionary: () => void;
   setDictionaryDataValue: (data: any) => void;
   setHotkeyFeedback: (pressed: boolean) => void;
+  setLastSelectedText: (text: string) => void;
+  getLastSelectedText: () => string;
 }
 
 export type UseAppStateReturn = AppState & AppStateActions;
@@ -27,6 +31,11 @@ export const useAppState = () => {
   const [currentWord, setCurrentWord] = useState("");
   const [dictionaryData, setDictionaryData] = useState<any | null>(null);
   const [hotkeyPressed, setHotkeyPressed] = useState(false);
+
+  // Persistent storage for last selected text
+  const [lastSelectedText, setLastSelectedText] = useLocalStorageState('last-selected-text', { 
+    defaultValue: "" 
+  });
 
   const toggleSettings = useCallback(() => {
     setShowSettings(!showSettings);
@@ -56,6 +65,16 @@ export const useAppState = () => {
     setHotkeyPressed(pressed);
   }, []);
 
+  // Set last selected text (automatically persists to localStorage)
+  const setLastSelectedTextAction = useCallback((text: string) => {
+    setLastSelectedText(text);
+  }, [setLastSelectedText]);
+
+  // Get last selected text
+  const getLastSelectedText = useCallback(() => {
+    return lastSelectedText;
+  }, [lastSelectedText]);
+
   return {
     // State
     showSettings,
@@ -64,6 +83,7 @@ export const useAppState = () => {
     currentWord,
     dictionaryData,
     hotkeyPressed,
+    lastSelectedText,
     
     // Actions
     toggleSettings,
@@ -72,5 +92,7 @@ export const useAppState = () => {
     hideDictionary,
     setDictionaryDataValue,
     setHotkeyFeedback,
+    setLastSelectedText: setLastSelectedTextAction,
+    getLastSelectedText,
   };
 }; 

@@ -1,21 +1,9 @@
-import { useEffect } from "react";
-import { useTextManagement } from "./hooks/useTextManagement";
 import { useSpeechContext } from "./contexts/SpeechContext";
 import { AppLayout } from "./components/AppLayout";
 
 function App() {
   // Get speech from context
   const speech = useSpeechContext();
-
-  // Text management for initialization
-  const textManagement = useTextManagement();
-
-  // Initialize with default text if no text is loaded
-  useEffect(() => {
-    if (!speech.originalText.trim() && textManagement.defaultText.trim()) {
-      textManagement.handleTextUpdate(textManagement.defaultText);
-    }
-  }, [speech.originalText, textManagement]);
 
   if (!speech.isSupported) {
     return (
