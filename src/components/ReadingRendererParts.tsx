@@ -37,7 +37,7 @@ export const Sentence: React.FC<{
   
   const sentenceClass = shouldHighlight
     ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 rounded-r-lg shadow-sm"
-    : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
+    : "sentence cursor-pointer hover:bg-yellow-50 hover:border-yellow-400 rounded-lg transition-colors";
 
   return (
     <div 
