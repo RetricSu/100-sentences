@@ -15,12 +15,16 @@ interface SettingsPanelProps {
   
   // Current display text (for saving)
   displayText: string;
+  
+  // Close function
+  onClose?: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTextUpdate,
   defaultText = "",
   displayText,
+  onClose,
 }) => {
   // Use the internalized settings management hook
   const {
@@ -124,10 +128,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   }, [handleRateChange]);
 
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm border border-stone-200 p-4 space-y-6">
-      <h3 className="font-semibold text-stone-800 text-lg border-b border-stone-100 pb-2">
-        设置      
-      </h3>
+    <div className="w-full bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-6">
+      <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+        <h3 className="font-semibold text-stone-800 text-lg">
+          设置      
+        </h3>
+        <button
+          onClick={onClose}
+          className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+          title="关闭设置"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
       {/* Text Input Section */}
       <div className="space-y-3">
