@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useDictationStorage } from "../hooks/useDictationStorage";
-import { DictationDisplayUtils } from "../utils/dictationDisplay";
-import { DictationService } from "../services/dictationService";
-import { DictationInputProps } from "../types/dictation";
+import { useDictationStorage } from "../../hooks/useDictationStorage";
+import { DictationDisplayUtils } from "../../utils/dictationDisplay";
+import { DictationService } from "../../services/dictationService";
+import { DictationInputProps } from "../../types/dictation";
 
 export const DictationInput: React.FC<DictationInputProps> = ({
   targetText,

@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
-import { useSpeechContext } from '../contexts/SpeechContext';
-import { useEventHandlersContext } from '../contexts/EventHandlersContext';
+import { useSpeechContext } from '../../contexts/SpeechContext';
+import { useEventHandlersContext } from '../../contexts/EventHandlersContext';
 import { Paragraph } from './ReadingRendererParts';
-import { processTextToStructuredData } from '../utils/textProcessing';
+import { processTextToStructuredData } from '../../utils/textProcessing';
 
 export const ReadingRenderer: React.FC = () => {
   const speech = useSpeechContext();

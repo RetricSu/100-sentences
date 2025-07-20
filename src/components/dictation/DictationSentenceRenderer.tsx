@@ -1,8 +1,8 @@
 import React from "react";
 import { DictationInput } from "./DictationInput";
-import { DictationDisplayUtils } from "../utils/dictationDisplay";
-import { DictationSentenceRendererProps, SentenceDisplayProps } from "../types/dictation";
-import { useEventHandlersContext } from "../contexts/EventHandlersContext";
+import { DictationDisplayUtils } from "../../utils/dictationDisplay";
+import { DictationSentenceRendererProps, SentenceDisplayProps } from "../../types/dictation";
+import { useEventHandlersContext } from "../../contexts/EventHandlersContext";
 
 const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
   sentence,

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useDictationContext } from '../contexts/DictationContext';
-import { useSpeechContext } from '../contexts/SpeechContext';
+import { useDictationContext } from '../../contexts/DictationContext';
+import { useSpeechContext } from '../../contexts/SpeechContext';
 import { DictationSentenceRenderer } from './DictationSentenceRenderer';
 
 export const DictationRenderer: React.FC = () => {
