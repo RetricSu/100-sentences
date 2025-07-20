@@ -77,7 +77,7 @@ export const Header: React.FC = () => {
                     停止
                   </button>
                 ) : (
-                  <div className="px-4 py-2 bg-stone-100 text-stone-500 rounded-lg flex items-center gap-2">
+                  <div className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg flex items-center gap-2">
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -127,7 +127,7 @@ export const Header: React.FC = () => {
                 <button
                   onClick={() => speech.speakCurrentSentence()}
                   disabled={!speech.originalText.trim() || speech.isSpeaking}
-                  className="flex items-center gap-2 p-2 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Play current sentence"
                 >
                   <svg
@@ -186,7 +186,7 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => speech.speakAll(speech.currentSentenceIndex)}
                 disabled={!speech.originalText.trim() || speech.isSpeaking}
-                className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <svg
                   className="w-5 h-5"
@@ -221,8 +221,8 @@ export const Header: React.FC = () => {
                 disabled={speech.isSpeaking}
                 className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
                   appState.isDictationMode
-                    ? "bg-purple-500 text-white hover:bg-purple-600"
-                    : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+                    ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                 title="切换默写模式"
               >

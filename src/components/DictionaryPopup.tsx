@@ -33,8 +33,8 @@ export const DictionaryPopup: React.FC = () => {
 
         {/* Content */}
         {dictionary.loading && (
-          <div className="text-sky-500 text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto mb-3"></div>
+          <div className="text-emerald-500 text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-3"></div>
             查找中...
           </div>
         )}

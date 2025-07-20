@@ -24,8 +24,8 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
 
   const shouldHighlight = isCurrentSentence && (isSpeaking || true);
   const sentenceClass = shouldHighlight
-    ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg shadow-sm"
-    : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
+    ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 rounded-r-lg shadow-sm"
+    : "sentence cursor-pointer hover:bg-emerald-50 rounded-lg transition-colors";
 
   return (
     <div className={sentenceClass} data-sentence-index={sentenceIndex}>

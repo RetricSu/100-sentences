@@ -9,7 +9,7 @@ export const Word: React.FC<{
   onClick 
 }) => (
   <span 
-    className="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm"
+    className="word cursor-pointer px-1 py-1 rounded-md hover:bg-emerald-100 hover:text-emerald-700 transition-colors duration-200 hover:shadow-sm"
     onClick={onClick}
   >
     {word}
@@ -36,8 +36,8 @@ export const Sentence: React.FC<{
   const shouldHighlight = isCurrentSentence && (isSpeaking || sentenceIndex > 0);
   
   const sentenceClass = shouldHighlight
-    ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 rounded-r-lg shadow-sm"
-    : "sentence cursor-pointer hover:bg-yellow-50 hover:border-yellow-400 rounded-lg transition-colors";
+    ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 pl-4 rounded-r-lg shadow-sm"
+    : "sentence cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 rounded-lg transition-colors";
 
   return (
     <div 

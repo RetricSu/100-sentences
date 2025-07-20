@@ -124,34 +124,34 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   }, [handleRateChange]);
 
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-6">
-      <h3 className="font-semibold text-gray-800 text-lg border-b border-gray-100 pb-2">
+    <div className="w-80 bg-white rounded-lg shadow-sm border border-stone-200 p-4 space-y-6">
+      <h3 className="font-semibold text-stone-800 text-lg border-b border-stone-100 pb-2">
         设置      
       </h3>
 
       {/* Text Input Section */}
       <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-stone-700">
           输入文本
         </label>
         <textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="输入英文文本或留空使用默认文本"
-          className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+          className="w-full h-24 p-3 border border-stone-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
         />
         
         <div className="flex gap-2">
           <button
             onClick={handleConvert}
-            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
+            className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors font-medium"
           >
             更新文本
           </button>
           <button
             onClick={handleSaveText}
             disabled={!displayText.trim()}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors font-medium disabled:bg-stone-400 disabled:cursor-not-allowed"
             title="Save current text"
           >
             💾 保存
@@ -163,19 +163,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           value={saveTextTitle}
           onChange={(e) => setSaveTextTitle(e.target.value)}
           placeholder="可选: 输入保存标题"
-          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+          className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
         />
       </div>
 
       {/* Saved Texts Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-stone-700">
             已保存文本 ({savedTexts.length})
           </label>
           <button
             onClick={toggleSavedTexts}
-            className="text-blue-500 hover:text-blue-700 text-sm font-medium transition-colors"
+            className="text-emerald-600 hover:text-emerald-700 text-sm font-medium transition-colors"
           >
             {showSavedTexts ? "隐藏" : "展开"}
           </button>
@@ -185,7 +185,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="bg-stone-50 rounded-lg p-3 max-h-64 overflow-y-auto scrollbar-thin">
             {savedTextsLoading ? (
               <div className="text-center text-stone-500 py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sky-500 mx-auto"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500 mx-auto"></div>
                 <p className="mt-2 text-sm">正在加载...</p>
               </div>
             ) : savedTexts.length === 0 ? (
@@ -318,7 +318,7 @@ const SavedTextItem: React.FC<SavedTextItemProps> = ({
         <div className="flex space-x-1 ml-2 flex-shrink-0">
           <button
             onClick={handleLoad}
-            className="p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-md transition-colors"
+            className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors"
             title="加载此文本"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"

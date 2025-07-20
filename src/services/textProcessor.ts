@@ -34,7 +34,7 @@ export class TextProcessor {
             const processedWords = words
               .map(
                 (word) =>
-                  `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`
+                  `<span class="word cursor-pointer px-1 py-1 rounded-md hover:bg-emerald-100 hover:text-emerald-700 transition-colors duration-200 hover:shadow-sm">${word}</span>`
               )
               .join(" ");
 
@@ -46,8 +46,8 @@ export class TextProcessor {
             const shouldHighlight = isCurrentSentence && (isSpeaking || currentSentenceIndex > 0);
             
             const sentenceClass = shouldHighlight
-              ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 rounded-r-lg shadow-sm"
-              : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
+              ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 pl-4 rounded-r-lg shadow-sm"
+              : "sentence cursor-pointer hover:bg-emerald-50 rounded-lg transition-colors";
 
             return `<div class="${sentenceClass}" data-sentence-index="${globalIndex}">${processedWords}</div>`;
           })
@@ -193,13 +193,13 @@ export class TextProcessor {
             const shouldHighlight = isCurrentSentence && (isSpeaking || currentSentenceIndex > 0);
             
             const sentenceClass = shouldHighlight
-              ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 pl-4 rounded-r-lg shadow-sm"
-              : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
+              ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 pl-4 rounded-r-lg shadow-sm"
+              : "sentence cursor-pointer hover:bg-emerald-50 rounded-lg transition-colors";
 
             if (isDictationActive) {
               // Show input field integrated with masked text for active dictation sentence
               return `<div class="${sentenceClass}" data-sentence-index="${globalIndex}">
-                <div class="dictation-active-sentence p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                <div class="dictation-active-sentence p-4 bg-emerald-50 border-2 border-emerald-200 rounded-lg">
                   <div id="dictation-input-container-${globalIndex}" class="dictation-input-area relative"></div>
                 </div>
               </div>`;
