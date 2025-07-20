@@ -1,15 +1,18 @@
 import React, { useRef } from 'react';
 import { useSpeechContext } from '../contexts/SpeechContext';
 import { useEventHandlersContext } from '../contexts/EventHandlersContext';
-import { useTextManagement } from '../hooks/useTextManagement';
+import { Paragraph } from './ReadingRendererParts';
+import { processTextToStructuredData } from '../utils/textProcessing';
 
 export const ReadingRenderer: React.FC = () => {
   const speech = useSpeechContext();
   const eventHandlers = useEventHandlersContext();
   const contentRef = useRef<HTMLDivElement>(null);
-  
-  // Text management for reading mode
-  const textManagement = useTextManagement();
+
+  // Process text into structured data instead of HTML
+  const processedContent = React.useMemo(() => {
+    return processTextToStructuredData(speech.originalText);
+  }, [speech.originalText]);
 
   // Don't render if no text is loaded
   if (!speech.originalText.trim()) {
@@ -27,12 +30,21 @@ export const ReadingRenderer: React.FC = () => {
     <div className="flex-1">
       <div
         ref={contentRef}
-        onClick={eventHandlers.handleClick}
-        dangerouslySetInnerHTML={{
-          __html: textManagement.processedHtml,
-        }}
         className="prose-reading text-stone-800"
-      />
+      >
+        {processedContent?.paragraphs.map((paragraph, paragraphIndex) => (
+          <Paragraph
+            key={`paragraph-${paragraphIndex}`}
+            sentences={paragraph.sentences}
+            sentenceIndices={paragraph.sentenceIndices}
+            currentSentenceIndex={speech.currentSentenceIndex}
+            isSpeaking={speech.isSpeaking}
+            onSentenceClick={eventHandlers.handleSentenceClick}
+            onWordClick={eventHandlers.handleWordClick}
+            isFirstParagraph={paragraph.isFirstParagraph}
+          />
+        ))}
+      </div>
     </div>
   );
 }; 

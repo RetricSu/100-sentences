@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useCallback, useEffect } from 'react';
-import { TextProcessor } from '../services/textProcessor';
 import { useAppStateContext } from './AppStateContext';
 import { useSpeechContext } from './SpeechContext';
 import { useDictionaryContext } from './DictionaryContext';
 import { useDictationContext } from './DictationContext';
+import { extractCleanWord } from '../utils/textProcessing';
 
 interface EventHandlersContextType {
   handleWordClick: (event: React.MouseEvent) => Promise<any>;
@@ -40,7 +40,7 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
       const target = event.target as HTMLElement;
 
       if (target.classList.contains("word")) {
-        const word = TextProcessor.extractCleanWord(target.textContent || "");
+        const word = extractCleanWord(target.textContent || "");
         if (!word) return;
 
         // Speak the word
