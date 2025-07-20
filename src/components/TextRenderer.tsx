@@ -9,7 +9,6 @@ interface TextRendererProps {
   dictationInputs: Record<string, string>;
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
-  onDictationComplete: () => void;
 }
 
 export const TextRenderer: React.FC<TextRendererProps> = ({
@@ -17,7 +16,6 @@ export const TextRenderer: React.FC<TextRendererProps> = ({
   dictationInputs,
   realTimeInputs,
   onRealTimeInputUpdate,
-  onDictationComplete,
 }) => {
   const appState = useAppStateContext();
   const speech = useSpeechContext();
@@ -43,7 +41,7 @@ export const TextRenderer: React.FC<TextRendererProps> = ({
           savedDictationInputs={dictationInputs}
           realTimeInputs={realTimeInputs}
           onRealTimeInputUpdate={onRealTimeInputUpdate}
-          onDictationComplete={onDictationComplete}
+          onDictationComplete={eventHandlers.handleDictationComplete}
         />
       </div>
     );

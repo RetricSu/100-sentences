@@ -5,7 +5,6 @@ import { AppLayout } from "./components/AppLayout";
 import { DictationDisplayUtils } from "./utils/dictationDisplay";
 import { useAppStateContext } from "./contexts/AppStateContext";
 import { useSpeechContext } from "./contexts/SpeechContext";
-import { useEventHandlersContext } from "./contexts/EventHandlersContext";
 
 function App() {
   // Get app state from context
@@ -13,9 +12,6 @@ function App() {
   
   // Get speech from context
   const speech = useSpeechContext();
-
-  // Get event handlers from context
-  const eventHandlers = useEventHandlersContext();
 
   // Dictation storage hook
   const { getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
@@ -39,10 +35,6 @@ function App() {
       [sentenceId]: input
     }));
   }, []);
-
-  const handleDictationComplete = useCallback(() => {
-    eventHandlers.handleDictationComplete();
-  }, [eventHandlers]);
 
   // Sync dictation inputs in real-time
   useEffect(() => {
@@ -77,18 +69,9 @@ function App() {
 
   return (
     <AppLayout
-      // Settings props (simplified)
-      showSettings={appState.showSettings}
-      onTextUpdate={textManagement.handleTextUpdate}
-      defaultText={textManagement.defaultText}
-      displayText={speech.originalText}
-
-      // Text renderer props
-      processedHtml={textManagement.processedHtml}
       dictationInputs={dictationInputs}
       realTimeInputs={realTimeInputs}
       onRealTimeInputUpdate={handleRealTimeInputUpdate}
-      onDictationComplete={handleDictationComplete}
     />
   );
 }

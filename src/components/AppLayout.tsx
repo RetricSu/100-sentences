@@ -3,36 +3,30 @@ import { Header } from './Header';
 import { SettingsPanel } from './SettingsPanel';
 import { TextRenderer } from './TextRenderer';
 import { DictionaryPopup } from './DictionaryPopup';
+import { useAppStateContext } from '../contexts/AppStateContext';
+import { useSpeechContext } from '../contexts/SpeechContext';
+import { useTextManagement } from '../hooks/useTextManagement';
 
 interface AppLayoutProps {
-  // Settings props (simplified)
-  showSettings: boolean;
-  onTextUpdate: (text: string) => void;
-  defaultText: string;
-  displayText: string;
-
-  // Text renderer props
-  processedHtml: string;
+  // Only keep props that can't be easily moved to context
   dictationInputs: Record<string, string>;
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
-  onDictationComplete: () => void;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
-  // Settings props (simplified)
-  showSettings,
-  onTextUpdate,
-  defaultText,
-  displayText,
-
-  // Text renderer props
-  processedHtml,
   dictationInputs,
   realTimeInputs,
   onRealTimeInputUpdate,
-  onDictationComplete,
 }) => {
+  const appState = useAppStateContext();
+  const speech = useSpeechContext();
+  
+  // Get text management from hook
+  const textManagement = useTextManagement({
+    isDictationMode: appState.isDictationMode,
+  });
+
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
       {/* Header */}
@@ -42,20 +36,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         {/* Main Content */}
         <div className="flex-1">
           <TextRenderer
-            processedHtml={processedHtml}
+            processedHtml={textManagement.processedHtml}
             dictationInputs={dictationInputs}
             realTimeInputs={realTimeInputs}
             onRealTimeInputUpdate={onRealTimeInputUpdate}
-            onDictationComplete={onDictationComplete}
           />
         </div>
 
         {/* Settings Panel */}
-        {showSettings && (
+        {appState.showSettings && (
           <SettingsPanel
-            onTextUpdate={onTextUpdate}
-            defaultText={defaultText}
-            displayText={displayText}
+            onTextUpdate={textManagement.handleTextUpdate}
+            defaultText={textManagement.defaultText}
+            displayText={speech.originalText}
           />
         )}
       </div>
