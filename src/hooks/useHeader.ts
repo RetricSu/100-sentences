@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { useDictionary } from './useDictionary';
 import { UseAppStateReturn } from './useAppState';
 import { useSpeechContext } from '../contexts/SpeechContext';
+import { useDictionaryContext } from '../contexts/DictionaryContext';
 
 interface UseHeaderProps {
   appState: UseAppStateReturn;
@@ -9,15 +9,8 @@ interface UseHeaderProps {
 
 export const useHeader = ({ appState }: UseHeaderProps) => {
   const speech = useSpeechContext();
+  const dictionary = useDictionaryContext();
   
-  // Dictionary hook
-  const {
-    dictionaryLoaded,
-    dictionarySize,
-    isLoading: isDictionaryLoading,
-    loadingProgress,
-  } = useDictionary();
-
   // Navigation handlers
   const handlePreviousSentence = useCallback(() => {
     if (speech.currentSentenceIndex > 0) {
@@ -50,10 +43,10 @@ export const useHeader = ({ appState }: UseHeaderProps) => {
 
   return {
     // Dictionary status
-    dictionaryLoaded,
-    dictionarySize,
-    isDictionaryLoading,
-    loadingProgress,
+    dictionaryLoaded: dictionary.dictionaryLoaded,
+    dictionarySize: dictionary.dictionarySize,
+    isDictionaryLoading: dictionary.isLoading,
+    loadingProgress: dictionary.loadingProgress,
     
     // Sentence navigation
     sentences: speech.sentences,

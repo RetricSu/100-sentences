@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useDictionary } from "./hooks/useDictionary";
 import { useDictationStorage } from "./hooks/useDictationStorage";
 import { useEventHandlers } from "./hooks/useEventHandlers";
 import { useTextManagement } from "./hooks/useTextManagement";
@@ -7,6 +6,7 @@ import { AppLayout } from "./components/AppLayout";
 import { DictationDisplayUtils } from "./utils/dictationDisplay";
 import { useAppStateContext } from "./contexts/AppStateContext";
 import { useSpeechContext } from "./contexts/SpeechContext";
+import { useDictionaryContext } from "./contexts/DictionaryContext";
 
 function App() {
   // Get app state from context
@@ -15,12 +15,12 @@ function App() {
   // Get speech from context
   const speech = useSpeechContext();
 
-  // Dictionary hook
+  // Get dictionary from context
   const {
     lookupWord,
     loading: dictionaryLoading,
     error: dictionaryError,
-  } = useDictionary();
+  } = useDictionaryContext();
 
   // Dictation storage hook
   const { getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
