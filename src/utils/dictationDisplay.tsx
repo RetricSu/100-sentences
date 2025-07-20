@@ -81,7 +81,7 @@ export class DictationDisplayUtils {
               } else if (isCurrentPosition) {
                 // Current cursor position
                 charResults.push(
-                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block min-w-[1ch] text-gray-800 bg-blue-100 animate-pulse">
+                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block min-w-[1ch] text-gray-800 bg-emerald-100 animate-pulse">
                     _
                   </span>
                 );
@@ -149,7 +149,7 @@ export class DictationDisplayUtils {
                   <span class="absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium">${userChar}</span>
                 </span>`;
               } else if (isCurrentPosition) {
-                result += `<span class="inline-block min-w-[1ch] text-gray-800 bg-blue-100 animate-pulse">_</span>`;
+                result += `<span class="inline-block min-w-[1ch] text-gray-800 bg-emerald-100 animate-pulse">_</span>`;
               } else {
                 result += `<span class="inline-block min-w-[1ch] text-gray-400">_</span>`;
               }

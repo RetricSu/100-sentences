@@ -1,134 +1,157 @@
-import React, { useState, useCallback } from "react";
+import React from "react";
 import { SavedText } from "../hooks/useLocalStorage";
+import { useSettingsPanel } from "../hooks/useSettingsPanel";
 
 interface VoiceOption {
   voice: SpeechSynthesisVoice;
 }
 
 interface SettingsPanelProps {
-  // Text processing callback - the main output of this component
+  // Core functionality - the main output
   onTextUpdate: (text: string) => void;
   
-  // Default text to use when input is empty
+  // Optional default text
   defaultText?: string;
   
-  // Current display text (for saving purposes)
+  // Current display text (for saving)
   displayText: string;
-  
-  // Saved texts management
-  savedTexts: SavedText[];
-  savedTextsLoading: boolean;
-  onLoadText: (savedText: SavedText) => void;
-  onDeleteText: (id: string) => void;
-  onClearAllTexts: () => void;
-  onSaveText: (text: string, title?: string) => void;
-  
-  // Voice settings
-  voices: VoiceOption[];
-  selectedVoice: SpeechSynthesisVoice | null;
-  onVoiceChange: (voice: SpeechSynthesisVoice) => void;
-  
-  // Speed settings
-  rate: number;
-  onRateChange: (rate: number) => void;
-  onClearDictationInputs: () => void;
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTextUpdate,
   defaultText = "",
   displayText,
-  savedTexts,
-  savedTextsLoading,
-  onLoadText,
-  onDeleteText,
-  onClearAllTexts,
-  onSaveText,
-  voices,
-  selectedVoice,
-  onVoiceChange,
-  rate,
-  onRateChange,
-  onClearDictationInputs,
 }) => {
-  // Internal state management
-  const [inputText, setInputText] = useState("");
-  const [saveTextTitle, setSaveTextTitle] = useState("");
-  const [showSavedTexts, setShowSavedTexts] = useState(true);
-
-  // Handle text conversion
-  const handleConvert = useCallback(() => {
-    const textToProcess = inputText.trim() || defaultText;
-    onTextUpdate(textToProcess);
-  }, [inputText, defaultText, onTextUpdate]);
-
-  // Handle text saving
-  const handleSaveText = useCallback(() => {
-    if (!displayText.trim()) return;
+  // Use the internalized settings management hook
+  const {
+    // Internal state
+    inputText,
+    setInputText,
+    saveTextTitle,
+    setSaveTextTitle,
+    showSavedTexts,
     
-    const title = saveTextTitle.trim() || undefined;
-    onSaveText(displayText, title);
-    setSaveTextTitle("");
+    // Saved texts
+    savedTexts,
+    savedTextsLoading,
     
-    // Show a brief success message
-    alert("Text saved successfully!");
-  }, [displayText, saveTextTitle, onSaveText]);
+    // Voice and rate settings
+    selectedVoiceInfo,
+    rate,
+    
+    // Actions
+    handleConvert,
+    handleSaveText,
+    handleLoadText,
+    handleVoiceChange,
+    handleRateChange,
+    toggleSavedTexts,
+    handleClearDictationInputs,
+    deleteText,
+    clearAllTexts,
+  } = useSettingsPanel({ onTextUpdate, defaultText, displayText });
 
-  // Handle loading saved text
-  const handleLoadText = useCallback((savedText: SavedText) => {
-    // Update internal input text to match loaded text
-    setInputText(savedText.content);
-    // Notify parent component
-    onLoadText(savedText);
-  }, [onLoadText]);
+  // Get available voices from the browser
+  const [voices, setVoices] = React.useState<VoiceOption[]>([]);
+  const [selectedVoice, setSelectedVoice] = React.useState<SpeechSynthesisVoice | null>(null);
 
-  // Handle voice selection
-  const handleVoiceChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Load voices and sync with saved voice info
+  React.useEffect(() => {
+    const loadVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+      const englishVoices = availableVoices
+        .filter(voice => voice.lang.startsWith('en'))
+        .map((voice, index) => ({ voice, index }));
+      
+      setVoices(englishVoices);
+
+      // Try to restore saved voice
+      if (selectedVoiceInfo) {
+        const savedVoice = englishVoices.find(v => 
+          v.voice.name === selectedVoiceInfo.name && v.voice.lang === selectedVoiceInfo.lang
+        )?.voice;
+        if (savedVoice) {
+          setSelectedVoice(savedVoice);
+          return;
+        }
+      }
+
+      // Auto-select best voice if no saved voice
+      const bestVoice = englishVoices.find(v => 
+        v.voice.lang === 'en-US' && v.voice.name.includes('Microsoft')
+      )?.voice ||
+      englishVoices.find(v => 
+        v.voice.lang === 'en-US' && v.voice.name.includes('David')
+      )?.voice ||
+      englishVoices.find(v => 
+        v.voice.lang === 'en-US' && v.voice.name.includes('Zira')
+      )?.voice ||
+      englishVoices.find(v => 
+        v.voice.lang === 'en-US' && v.voice.localService
+      )?.voice ||
+      englishVoices.find(v => 
+        v.voice.lang.startsWith('en') && v.voice.localService
+      )?.voice ||
+      englishVoices[0]?.voice;
+
+      if (bestVoice) {
+        setSelectedVoice(bestVoice);
+      }
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, [selectedVoiceInfo]);
+
+  // Handle voice selection change
+  const handleVoiceSelectChange = React.useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const index = parseInt(e.target.value);
     if (index >= 0 && voices[index]) {
-      onVoiceChange(voices[index].voice);
+      const voice = voices[index].voice;
+      setSelectedVoice(voice);
+      handleVoiceChange(voice);
     }
-  }, [voices, onVoiceChange]);
+  }, [voices, handleVoiceChange]);
 
-  // Handle rate change
-  const handleRateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onRateChange(parseFloat(e.target.value));
-  }, [onRateChange]);
-
-  // Toggle saved texts visibility
-  const toggleSavedTexts = useCallback(() => {
-    setShowSavedTexts(!showSavedTexts);
-  }, [showSavedTexts]);
+  // Handle rate slider change
+  const handleRateSliderChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newRate = parseFloat(e.target.value);
+    handleRateChange(newRate);
+  }, [handleRateChange]);
 
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-6">
-      <h3 className="font-semibold text-gray-800 text-lg border-b border-gray-100 pb-2">
+    <div className="w-80 bg-white rounded-lg shadow-sm border border-stone-200 p-4 space-y-6">
+      <h3 className="font-semibold text-stone-800 text-lg border-b border-stone-100 pb-2">
         设置      
       </h3>
 
       {/* Text Input Section */}
       <div className="space-y-3">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-stone-700">
           输入文本
         </label>
         <textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder="输入英文文本或留空使用默认文本"
-          className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+          className="w-full h-24 p-3 border border-stone-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
         />
         
         <div className="flex gap-2">
           <button
             onClick={handleConvert}
-            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
+            className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors font-medium"
           >
             更新文本
           </button>
           <button
             onClick={handleSaveText}
             disabled={!displayText.trim()}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors font-medium disabled:bg-stone-400 disabled:cursor-not-allowed"
             title="Save current text"
           >
             💾 保存
@@ -140,19 +163,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           value={saveTextTitle}
           onChange={(e) => setSaveTextTitle(e.target.value)}
           placeholder="可选: 输入保存标题"
-          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+          className="w-full p-2 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
         />
       </div>
 
       {/* Saved Texts Section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-stone-700">
             已保存文本 ({savedTexts.length})
           </label>
           <button
             onClick={toggleSavedTexts}
-            className="text-blue-500 hover:text-blue-700 text-sm font-medium transition-colors"
+            className="text-emerald-600 hover:text-emerald-700 text-sm font-medium transition-colors"
           >
             {showSavedTexts ? "隐藏" : "展开"}
           </button>
@@ -162,7 +185,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="bg-stone-50 rounded-lg p-3 max-h-64 overflow-y-auto scrollbar-thin">
             {savedTextsLoading ? (
               <div className="text-center text-stone-500 py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-sky-500 mx-auto"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500 mx-auto"></div>
                 <p className="mt-2 text-sm">正在加载...</p>
               </div>
             ) : savedTexts.length === 0 ? (
@@ -177,14 +200,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     key={savedText.id}
                     savedText={savedText}
                     onLoad={handleLoadText}
-                    onDelete={onDeleteText}
+                    onDelete={deleteText}
                   />
                 ))}
 
                 {savedTexts.length > 0 && (
                   <div className="pt-3 border-t border-stone-200">
                     <button
-                      onClick={onClearAllTexts}
+                      onClick={clearAllTexts}
                       className="w-full btn-secondary text-sm text-rose-600 border-rose-200 hover:bg-rose-50"
                     >
                       清空所有保存
@@ -204,7 +227,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </label>
         <select
           value={voices.findIndex((v) => v.voice === selectedVoice)}
-          onChange={handleVoiceChange}
+          onChange={handleVoiceSelectChange}
           className="input-primary text-sm"
         >
           <option value={-1}>选择语音...</option>
@@ -228,7 +251,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           max="2"
           step="0.1"
           value={rate}
-          onChange={handleRateChange}
+          onChange={handleRateSliderChange}
           className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer"
         />
         <div className="flex justify-between text-xs text-stone-500">
@@ -245,7 +268,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </label>
         
         <button
-          onClick={onClearDictationInputs}
+          onClick={handleClearDictationInputs}
           className="w-full btn-secondary text-sm text-amber-600 border-amber-200 hover:bg-amber-50"
           title="清除所有默写进度"
         >
@@ -295,7 +318,7 @@ const SavedTextItem: React.FC<SavedTextItemProps> = ({
         <div className="flex space-x-1 ml-2 flex-shrink-0">
           <button
             onClick={handleLoad}
-            className="p-1.5 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-md transition-colors"
+            className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors"
             title="加载此文本"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"

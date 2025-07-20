@@ -1,7 +1,8 @@
 import React from "react";
 import { DictationInput } from "./DictationInput";
-import { DictationDisplayUtils } from "../utils/dictationDisplay";
-import { DictationSentenceRendererProps, SentenceDisplayProps } from "../types/dictation";
+import { DictationDisplayUtils } from "../../utils/dictationDisplay";
+import { DictationSentenceRendererProps, SentenceDisplayProps } from "../../types/dictation";
+import { useEventHandlersContext } from "../../contexts/EventHandlersContext";
 
 const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
   sentence,
@@ -9,13 +10,13 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
   isActive,
   isCurrentSentence,
   isSpeaking,
-  savedInput,
-  realTimeInput,
-  onRealTimeInputUpdate,
+  storedInput,
+  activeInput,
+  onInputUpdate,
   onDictationComplete,
 }) => {
   const generateProgressDisplay = (): React.ReactNode[] => {
-    const displayInput = realTimeInput || savedInput;
+    const displayInput = activeInput || storedInput;
     return DictationDisplayUtils.generateMaskedDisplay(sentence.trim(), displayInput);
   };
 
@@ -23,8 +24,8 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
 
   const shouldHighlight = isCurrentSentence && (isSpeaking || true);
   const sentenceClass = shouldHighlight
-    ? "current-sentence bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg shadow-sm"
-    : "sentence cursor-pointer hover:bg-gray-50 rounded-lg transition-colors";
+    ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 rounded-r-lg shadow-sm"
+    : "sentence cursor-pointer hover:bg-emerald-50 rounded-lg transition-colors";
 
   return (
     <div className={sentenceClass} data-sentence-index={sentenceIndex}>
@@ -35,8 +36,8 @@ const SentenceDisplay: React.FC<SentenceDisplayProps> = ({
             sentenceIndex={sentenceIndex}
             isVisible={true}
             onComplete={onDictationComplete}
-            onInputChange={(input) => onRealTimeInputUpdate(sentence, sentenceIndex, input)}
-            initialInput={realTimeInput || savedInput}
+            onInputChange={(input) => onInputUpdate(sentence, sentenceIndex, input)}
+            initialInput={activeInput || storedInput}
             className=""
           />
         </div>
@@ -54,17 +55,19 @@ export const DictationSentenceRenderer: React.FC<DictationSentenceRendererProps>
   dictationSentenceIndex,
   currentSentenceIndex,
   isSpeaking,
-  savedDictationInputs,
-  realTimeInputs,
-  onRealTimeInputUpdate,
+  storedInputs,
+  activeInputs,
+  onInputUpdate,
   onDictationComplete,
 }) => {
+  const eventHandlers = useEventHandlersContext();
+
   return (
-    <>
+    <div onClick={eventHandlers.handleClick}>
       {sentences.map((sentence, index) => {
         const sentenceId = DictationDisplayUtils.generateSentenceId(sentence.trim(), index);
-        const savedInput = savedDictationInputs[sentenceId] || '';
-        const realTimeInput = realTimeInputs[sentenceId] || '';
+        const storedInput = storedInputs[sentenceId] || '';
+        const activeInput = activeInputs[sentenceId] || '';
         const isActive = dictationSentenceIndex === index;
         const isCurrentSentence = index === currentSentenceIndex;
 
@@ -76,13 +79,13 @@ export const DictationSentenceRenderer: React.FC<DictationSentenceRendererProps>
             isActive={isActive}
             isCurrentSentence={isCurrentSentence}
             isSpeaking={isSpeaking}
-            savedInput={savedInput}
-            realTimeInput={realTimeInput}
-            onRealTimeInputUpdate={onRealTimeInputUpdate}
+            storedInput={storedInput}
+            activeInput={activeInput}
+            onInputUpdate={onInputUpdate}
             onDictationComplete={onDictationComplete}
           />
         );
       })}
-    </>
+    </div>
   );
 }; 

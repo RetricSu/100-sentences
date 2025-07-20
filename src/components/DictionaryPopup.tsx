@@ -1,25 +1,16 @@
 import React from 'react';
-import { DictionaryEntry } from '../types/index';
+import { useAppStateContext } from '../contexts/AppStateContext';
+import { useDictionaryContext } from '../contexts/DictionaryContext';
+import { useSpeechContext } from '../contexts/SpeechContext';
 
-interface DictionaryPopupProps {
-  word: string;
-  data: DictionaryEntry | null;
-  loading: boolean;
-  error: string | null;
-  isVisible: boolean;
-  onClose: () => void;
-  onSpeak: (text: string) => void;
-}
+export const DictionaryPopup: React.FC = () => {
+  const appState = useAppStateContext();
+  const dictionary = useDictionaryContext();
+  const speech = useSpeechContext();
+  
+  // Get values from context
+  const { currentWord: word, dictionaryData: data, dictionaryVisible: isVisible, hideDictionary: onClose } = appState;
 
-export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
-  word,
-  data,
-  loading,
-  error,
-  isVisible,
-  onClose,
-  onSpeak,
-}) => {
   if (!isVisible) return null;
 
   return (
@@ -41,37 +32,38 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
         </button>
 
         {/* Content */}
-        {loading && (
-          <div className="text-sky-500 text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500 mx-auto mb-3"></div>
+        {dictionary.loading && (
+          <div className="text-emerald-500 text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-3"></div>
             查找中...
           </div>
         )}
 
-        {error && (
+        {dictionary.error && (
           <div className="text-rose-500 text-center py-4">
             <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <svg className="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            {error}
+            {dictionary.error}
           </div>
         )}
 
         {data && (
           <div className="space-y-4">
             {/* Word title */}
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+            <div className="flex items-center justify-start gap-2 pb-3 border-b border-stone-100">
               <div className="text-2xl font-bold text-stone-800">{word}</div>
               <button
-                onClick={() => onSpeak(word)}
+                onClick={() => speech.speak(word)}
                 className="btn-primary p-2 text-sm"
                 title="播放发音"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
                 </svg>
+                发音
               </button>
             </div>
 
@@ -85,7 +77,7 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="text-sm font-medium text-amber-800 mb-2">中文翻译</div>
                 <div className="text-base text-amber-900 leading-relaxed">
-                  {data.chinese.split('\n').map((line, index) => (
+                  {data.chinese.split('\n').map((line: string, index: number) => (
                     <div key={index} className="mb-1">{line}</div>
                   ))}
                 </div>
@@ -95,7 +87,7 @@ export const DictionaryPopup: React.FC<DictionaryPopupProps> = ({
             {/* English Meanings */}
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-stone-700">英文释义</h4>
-              {data.meanings.map((meaning, index) => (
+              {data.meanings.map((meaning: any, index: number) => (
                 <div key={index} className="space-y-1">
                   <div className="flex items-start gap-2">
                     <span className="font-semibold text-emerald-600 text-sm">{meaning.partOfSpeech}</span>

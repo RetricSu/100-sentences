@@ -1,0 +1,76 @@
+import { useState, useCallback } from 'react';
+
+export interface AppState {
+  showSettings: boolean;
+  isDictationMode: boolean;
+  dictionaryVisible: boolean;
+  currentWord: string;
+  dictionaryData: any | null;
+  hotkeyPressed: boolean;
+}
+
+export interface AppStateActions {
+  toggleSettings: () => void;
+  toggleDictationMode: () => void;
+  showDictionary: (word: string) => void;
+  hideDictionary: () => void;
+  setDictionaryDataValue: (data: any) => void;
+  setHotkeyFeedback: (pressed: boolean) => void;
+}
+
+export type UseAppStateReturn = AppState & AppStateActions;
+
+export const useAppState = () => {
+  const [showSettings, setShowSettings] = useState(false);
+  const [isDictationMode, setIsDictationMode] = useState(false);
+  const [dictionaryVisible, setDictionaryVisible] = useState(false);
+  const [currentWord, setCurrentWord] = useState("");
+  const [dictionaryData, setDictionaryData] = useState<any | null>(null);
+  const [hotkeyPressed, setHotkeyPressed] = useState(false);
+
+  const toggleSettings = useCallback(() => {
+    setShowSettings(!showSettings);
+  }, [showSettings]);
+
+  const toggleDictationMode = useCallback(() => {
+    setIsDictationMode(!isDictationMode);
+  }, [isDictationMode]);
+
+  const showDictionary = useCallback((word: string) => {
+    setCurrentWord(word);
+    setDictionaryVisible(true);
+    setDictionaryData(null);
+  }, []);
+
+  const hideDictionary = useCallback(() => {
+    setDictionaryVisible(false);
+    setCurrentWord("");
+    setDictionaryData(null);
+  }, []);
+
+  const setDictionaryDataValue = useCallback((data: any) => {
+    setDictionaryData(data);
+  }, []);
+
+  const setHotkeyFeedback = useCallback((pressed: boolean) => {
+    setHotkeyPressed(pressed);
+  }, []);
+
+  return {
+    // State
+    showSettings,
+    isDictationMode,
+    dictionaryVisible,
+    currentWord,
+    dictionaryData,
+    hotkeyPressed,
+    
+    // Actions
+    toggleSettings,
+    toggleDictationMode,
+    showDictionary,
+    hideDictionary,
+    setDictionaryDataValue,
+    setHotkeyFeedback,
+  };
+}; 
