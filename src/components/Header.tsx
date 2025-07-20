@@ -2,11 +2,7 @@ import React from "react";
 import { useHeader } from "../hooks/useHeader";
 import { useAppStateContext } from "../contexts/AppStateContext";
 
-interface HeaderProps {
-  speech: any;
-}
-
-export const Header: React.FC<HeaderProps> = ({ speech }) => {
+export const Header: React.FC = () => {
   const appState = useAppStateContext();
   
   // Use the internalized header management hook
@@ -36,149 +32,140 @@ export const Header: React.FC<HeaderProps> = ({ speech }) => {
     // Toggle functions
     onToggleSettings,
     onToggleDictationMode,
-  } = useHeader({ appState, speech });
+  } = useHeader({ appState });
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">顽童英语</h1>
-          {dictionaryLoaded && (
-            <div className="text-sm text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full font-medium">
-              {dictionarySize.toLocaleString()} 本地词典
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {/* Status Indicator */}
-          <button
-            onClick={isSpeaking ? handleStopReading : undefined}
-            disabled={!isSpeaking}
-            className={`btn-secondary px-4 py-2 ${
-              isSpeaking ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100" : ""
-            }`}
-            title={isSpeaking ? "点击停止朗读" : "阅读状态"}
-          >
-            <div
-              className={`w-2 h-2 rounded-full mr-2 ${
-                isSpeaking ? "bg-rose-500 animate-pulse" : "bg-stone-400"
-              }`}
-            ></div>
-            <span className="text-sm font-medium">{isSpeaking ? "暂停" : "待机"}</span>
-          </button>
-
-          {/* Read All Button */}
-          <button
-            onClick={handleStartReading}
-            disabled={!hasText || isSpeaking}
-            className="btn-secondary"
-            title="朗读全文"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
-            </svg>
-            朗读全文
-          </button>
-
-          {/* Sentence Navigation */}
-          <div className="flex items-center bg-white rounded-lg shadow-soft border border-stone-200">
-            <button
-              onClick={handlePreviousSentence}
-              disabled={currentSentenceIndex === 0 || isSpeaking}
-              className="p-2.5 hover:bg-stone-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-l-lg"
-              title="上一句"
-            >
-              <svg className="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
+          {/* Left side - Navigation controls */}
+          <div className="flex items-center gap-4">
+            {/* Previous/Next buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePreviousSentence}
+                disabled={currentSentenceIndex === 0}
+                className="p-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Previous sentence"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              <button
+                onClick={handleNextSentence}
+                disabled={currentSentenceIndex === sentences.length - 1}
+                className="p-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Next sentence"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
 
+            {/* Current sentence indicator */}
+            <div className="text-sm text-stone-500">
+              {sentences.length > 0 ? `${currentSentenceIndex + 1} / ${sentences.length}` : 'No text'}
+            </div>
+
+            {/* Play current sentence button */}
             <button
               onClick={handleSpeakCurrentSentence}
-              disabled={sentences.length === 0 || isSpeaking}
-              className="px-3 py-2 font-medium transition-all duration-200 disabled:cursor-not-allowed flex items-center space-x-1 bg-emerald-500 text-white hover:bg-emerald-600 disabled:bg-stone-300"
-              title="朗读当前句子 (快捷键: 空格键 - 播放/暂停)"
+              disabled={!hasText}
+              className="p-2 text-sky-600 hover:text-sky-700 hover:bg-sky-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Play current sentence"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12 6.5z" />
-              </svg>
-              <span className="text-sm">朗读句子</span>
-              <span className="text-xs opacity-75 ml-1">空格</span>
-            </button>
-
-            <button
-              onClick={handleNextSentence}
-              disabled={currentSentenceIndex >= sentences.length - 1 || isSpeaking}
-              className="p-2.5 hover:bg-stone-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-              title="下一句"
-            >
-              <svg className="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
-
-            <div className="px-3 py-2 bg-stone-50 text-xs font-medium text-stone-500 rounded-r-lg border-l border-stone-200"
-            >
-              {sentences.length > 0 ? `${currentSentenceIndex + 1}/${sentences.length}` : "0/0"}
-            </div>
           </div>
 
-          {/* Dictation Mode Toggle */}
-          <button
-            onClick={onToggleDictationMode}
-            disabled={isSpeaking}
-            className={`btn-secondary ${
-              isDictationMode ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : ""
-            } ${isSpeaking ? "opacity-50 cursor-not-allowed" : ""}`}
-            title={isSpeaking ? "朗读时无法切换模式" : isDictationMode ? "退出默写模式" : "进入默写模式"}
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            {isDictationMode ? "退出默写" : "默写模式"}
-          </button>
+          {/* Center - Reading controls */}
+          <div className="flex items-center gap-3">
+            {/* Play/Stop button */}
+            {isSpeaking ? (
+              <button
+                onClick={handleStopReading}
+                className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Stop
+              </button>
+            ) : (
+              <button
+                onClick={handleStartReading}
+                disabled={!hasText}
+                className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Play All
+              </button>
+            )}
+          </div>
 
-          {/* Settings */}
-          <button
-            onClick={onToggleSettings}
-            disabled={isSpeaking}
-            className={`btn-secondary p-2.5 ${isSpeaking ? "opacity-50 cursor-not-allowed" : ""}`}
-            title={isSpeaking ? "朗读时无法打开设置" : "设置"}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          {/* Right side - Mode toggles and settings */}
+          <div className="flex items-center gap-3">
+            {/* Dictation mode toggle */}
+            <button
+              onClick={onToggleDictationMode}
+              className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+                isDictationMode
+                  ? 'bg-purple-500 text-white hover:bg-purple-600'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+              title="Toggle dictation mode"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Dictation
+            </button>
+
+            {/* Settings button */}
+            <button
+              onClick={onToggleSettings}
+              className="p-2 text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors"
+              title="Settings"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+
+            {/* Dictionary status indicator */}
+            <div className="flex items-center gap-2 text-sm">
+              {isDictionaryLoading ? (
+                <div className="flex items-center gap-2 text-amber-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600"></div>
+                  <span>Loading dictionary... {loadingProgress}%</span>
+                </div>
+              ) : dictionaryLoaded ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Dictionary ready ({dictionarySize.toLocaleString()} words)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-red-600">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Dictionary error</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Loading Bar */}
-      {isDictionaryLoading && (
-        <div className="bg-amber-50 px-6 py-2 border-t border-amber-200">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between text-sm text-amber-700 mb-2">
-              <span>正在加载词典... ({loadingProgress}%)</span>
-              <span className="text-xs">
-                {loadingProgress < 50 ? "正在下载..." : "正在处理..."}
-              </span>
-            </div>
-            <div className="w-full bg-amber-200 rounded-full h-1.5">
-              <div
-                className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${loadingProgress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 };

@@ -1,13 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { TextProcessor } from '../services/textProcessor';
 import { defaultText } from '../data/const';
+import { useSpeechContext } from '../contexts/SpeechContext';
 
 interface UseTextManagementProps {
-  speech: any;
   isDictationMode: boolean;
 }
 
-export const useTextManagement = ({ speech, isDictationMode }: UseTextManagementProps) => {
+export const useTextManagement = ({ isDictationMode }: UseTextManagementProps) => {
+  const speech = useSpeechContext();
+  
   // Generate processed HTML for normal mode only (dictation mode uses React components)
   const processedHtml = useMemo(() => {
     if (!speech.originalText.trim() || isDictationMode) return "";

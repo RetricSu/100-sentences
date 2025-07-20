@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { DictationSentenceRenderer } from './DictationSentenceRenderer';
 import { useAppStateContext } from '../contexts/AppStateContext';
+import { useSpeechContext } from '../contexts/SpeechContext';
 
 interface TextRendererProps {
   processedHtml: string;
-  speech: any;
   dictationInputs: Record<string, string>;
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
@@ -14,7 +14,6 @@ interface TextRendererProps {
 
 export const TextRenderer: React.FC<TextRendererProps> = ({
   processedHtml,
-  speech,
   dictationInputs,
   realTimeInputs,
   onRealTimeInputUpdate,
@@ -22,6 +21,7 @@ export const TextRenderer: React.FC<TextRendererProps> = ({
   onClick,
 }) => {
   const appState = useAppStateContext();
+  const speech = useSpeechContext();
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Get values from context

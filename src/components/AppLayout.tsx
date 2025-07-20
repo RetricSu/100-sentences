@@ -3,12 +3,8 @@ import { Header } from './Header';
 import { SettingsPanel } from './SettingsPanel';
 import { TextRenderer } from './TextRenderer';
 import { DictionaryPopup } from './DictionaryPopup';
-import { useSpeech } from '../hooks/useSpeech';
 
 interface AppLayoutProps {
-  // Speech instance
-  speech: ReturnType<typeof useSpeech>;
-
   // Settings props (simplified)
   showSettings: boolean;
   onTextUpdate: (text: string) => void;
@@ -30,9 +26,6 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
-  // Speech instance
-  speech,
-
   // Settings props (simplified)
   showSettings,
   onTextUpdate,
@@ -55,14 +48,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
       {/* Header */}
-      <Header speech={speech} />
+      <Header />
 
       <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
         {/* Main Content */}
         <div className="flex-1">
           <TextRenderer
             processedHtml={processedHtml}
-            speech={speech}
             dictationInputs={dictationInputs}
             realTimeInputs={realTimeInputs}
             onRealTimeInputUpdate={onRealTimeInputUpdate}

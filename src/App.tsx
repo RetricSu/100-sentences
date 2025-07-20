@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useSpeech } from "./hooks/useSpeech";
 import { useDictionary } from "./hooks/useDictionary";
 import { useDictationStorage } from "./hooks/useDictationStorage";
 import { useEventHandlers } from "./hooks/useEventHandlers";
@@ -7,13 +6,14 @@ import { useTextManagement } from "./hooks/useTextManagement";
 import { AppLayout } from "./components/AppLayout";
 import { DictationDisplayUtils } from "./utils/dictationDisplay";
 import { useAppStateContext } from "./contexts/AppStateContext";
+import { useSpeechContext } from "./contexts/SpeechContext";
 
 function App() {
   // Get app state from context
   const appState = useAppStateContext();
-
-  // Speech hook - single source of truth for text and speech state
-  const speech = useSpeech();
+  
+  // Get speech from context
+  const speech = useSpeechContext();
 
   // Dictionary hook
   const {
@@ -27,7 +27,6 @@ function App() {
   
   // Text management
   const textManagement = useTextManagement({
-    speech,
     isDictationMode: appState.isDictationMode,
   });
 
@@ -129,9 +128,6 @@ function App() {
 
   return (
     <AppLayout
-      // Speech instance
-      speech={speech}
-
       // Settings props (simplified)
       showSettings={appState.showSettings}
       onTextUpdate={textManagement.handleTextUpdate}

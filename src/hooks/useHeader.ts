@@ -1,13 +1,15 @@
 import { useCallback } from 'react';
 import { useDictionary } from './useDictionary';
 import { UseAppStateReturn } from './useAppState';
+import { useSpeechContext } from '../contexts/SpeechContext';
 
 interface UseHeaderProps {
   appState: UseAppStateReturn;
-  speech: any; // Accept speech instance from parent
 }
 
-export const useHeader = ({ appState, speech }: UseHeaderProps) => {
+export const useHeader = ({ appState }: UseHeaderProps) => {
+  const speech = useSpeechContext();
+  
   // Dictionary hook
   const {
     dictionaryLoaded,
