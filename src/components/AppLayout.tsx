@@ -16,9 +16,7 @@ interface AppLayoutProps {
   displayText: string;
 
   // Text renderer props
-  isDictationMode: boolean;
   processedHtml: string;
-  dictationSentenceIndex: number | null;
   dictationInputs: Record<string, string>;
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
@@ -42,9 +40,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   displayText,
 
   // Text renderer props
-  isDictationMode,
   processedHtml,
-  dictationSentenceIndex,
   dictationInputs,
   realTimeInputs,
   onRealTimeInputUpdate,
@@ -67,8 +63,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <TextRenderer
             processedHtml={processedHtml}
             speech={speech}
-            isDictationMode={isDictationMode}
-            dictationSentenceIndex={dictationSentenceIndex}
             dictationInputs={dictationInputs}
             realTimeInputs={realTimeInputs}
             onRealTimeInputUpdate={onRealTimeInputUpdate}

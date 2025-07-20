@@ -1,11 +1,10 @@
 import React, { useRef } from 'react';
 import { DictationSentenceRenderer } from './DictationSentenceRenderer';
+import { useAppStateContext } from '../contexts/AppStateContext';
 
 interface TextRendererProps {
-  isDictationMode: boolean;
   processedHtml: string;
   speech: any;
-  dictationSentenceIndex: number | null;
   dictationInputs: Record<string, string>;
   realTimeInputs: Record<string, string>;
   onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
@@ -14,17 +13,19 @@ interface TextRendererProps {
 }
 
 export const TextRenderer: React.FC<TextRendererProps> = ({
-  isDictationMode,
   processedHtml,
   speech,
-  dictationSentenceIndex,
   dictationInputs,
   realTimeInputs,
   onRealTimeInputUpdate,
   onDictationComplete,
   onClick,
 }) => {
+  const appState = useAppStateContext();
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Get values from context
+  const { isDictationMode, dictationSentenceIndex } = appState;
 
   if (isDictationMode && speech.originalText.trim()) {
     // Dictation mode: Use React components for declarative rendering

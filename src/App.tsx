@@ -139,9 +139,7 @@ function App() {
       displayText={speech.originalText}
 
       // Text renderer props
-      isDictationMode={appState.isDictationMode}
       processedHtml={textManagement.processedHtml}
-      dictationSentenceIndex={appState.dictationSentenceIndex}
       dictationInputs={dictationInputs}
       realTimeInputs={realTimeInputs}
       onRealTimeInputUpdate={handleRealTimeInputUpdate}
