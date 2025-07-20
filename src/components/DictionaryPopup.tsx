@@ -53,7 +53,7 @@ export const DictionaryPopup: React.FC = () => {
         {data && (
           <div className="space-y-4">
             {/* Word title */}
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+            <div className="flex items-center justify-start gap-2 pb-3 border-b border-stone-100">
               <div className="text-2xl font-bold text-stone-800">{word}</div>
               <button
                 onClick={() => speech.speak(word)}
@@ -63,6 +63,7 @@ export const DictionaryPopup: React.FC = () => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728" />
                 </svg>
+                发音
               </button>
             </div>
 
