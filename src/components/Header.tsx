@@ -1,13 +1,14 @@
 import React from "react";
 import { useHeader } from "../hooks/useHeader";
-import { UseAppStateReturn } from "../hooks/useAppState";
+import { useAppStateContext } from "../contexts/AppStateContext";
 
 interface HeaderProps {
-  appState: UseAppStateReturn;
   speech: any;
 }
 
-export const Header: React.FC<HeaderProps> = ({ appState, speech }) => {
+export const Header: React.FC<HeaderProps> = ({ speech }) => {
+  const appState = useAppStateContext();
+  
   // Use the internalized header management hook
   const {
     // Dictionary status
