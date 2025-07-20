@@ -30,9 +30,9 @@ export interface DictationSentenceRendererProps {
   dictationSentenceIndex: number | null;
   currentSentenceIndex: number;
   isSpeaking: boolean;
-  savedDictationInputs: DictationStorage;
-  realTimeInputs: DictationStorage;
-  onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
+  storedInputs: DictationStorage;
+  activeInputs: DictationStorage;
+  onInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
   onDictationComplete: () => void;
 }
 
@@ -42,9 +42,9 @@ export interface SentenceDisplayProps {
   isActive: boolean;
   isCurrentSentence: boolean;
   isSpeaking: boolean;
-  savedInput: string;
-  realTimeInput: string;
-  onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
+  storedInput: string;
+  activeInput: string;
+  onInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
   onDictationComplete: () => void;
 }
 

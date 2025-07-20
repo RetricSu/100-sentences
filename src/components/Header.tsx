@@ -2,11 +2,13 @@ import React from "react";
 import { useAppStateContext } from "../contexts/AppStateContext";
 import { useSpeechContext } from "../contexts/SpeechContext";
 import { useDictionaryContext } from "../contexts/DictionaryContext";
+import { useDictationContext } from "../contexts/DictationContext";
 
 export const Header: React.FC = () => {
   const appState = useAppStateContext();
   const speech = useSpeechContext();
   const dictionary = useDictionaryContext();
+  const dictation = useDictationContext();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
@@ -88,7 +90,15 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-3">
             {/* Dictation mode toggle */}
             <button
-              onClick={appState.toggleDictationMode}
+              onClick={() => {
+                if (appState.isDictationMode) {
+                  appState.toggleDictationMode();
+                  dictation.deactivate();
+                } else {
+                  appState.toggleDictationMode();
+                  dictation.activate();
+                }
+              }}
               className={`px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
                 appState.isDictationMode
                   ? 'bg-purple-500 text-white hover:bg-purple-600'

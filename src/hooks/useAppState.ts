@@ -3,7 +3,6 @@ import { useState, useCallback } from 'react';
 export interface AppState {
   showSettings: boolean;
   isDictationMode: boolean;
-  dictationSentenceIndex: number | null;
   dictionaryVisible: boolean;
   currentWord: string;
   dictionaryData: any | null;
@@ -13,7 +12,6 @@ export interface AppState {
 export interface AppStateActions {
   toggleSettings: () => void;
   toggleDictationMode: () => void;
-  setDictationSentence: (index: number | null) => void;
   showDictionary: (word: string) => void;
   hideDictionary: () => void;
   setDictionaryDataValue: (data: any) => void;
@@ -25,7 +23,6 @@ export type UseAppStateReturn = AppState & AppStateActions;
 export const useAppState = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isDictationMode, setIsDictationMode] = useState(false);
-  const [dictationSentenceIndex, setDictationSentenceIndex] = useState<number | null>(null);
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
   const [dictionaryData, setDictionaryData] = useState<any | null>(null);
@@ -37,12 +34,7 @@ export const useAppState = () => {
 
   const toggleDictationMode = useCallback(() => {
     setIsDictationMode(!isDictationMode);
-    setDictationSentenceIndex(null);
   }, [isDictationMode]);
-
-  const setDictationSentence = useCallback((index: number | null) => {
-    setDictationSentenceIndex(index);
-  }, []);
 
   const showDictionary = useCallback((word: string) => {
     setCurrentWord(word);
@@ -68,7 +60,6 @@ export const useAppState = () => {
     // State
     showSettings,
     isDictationMode,
-    dictationSentenceIndex,
     dictionaryVisible,
     currentWord,
     dictionaryData,
@@ -77,7 +68,6 @@ export const useAppState = () => {
     // Actions
     toggleSettings,
     toggleDictationMode,
-    setDictationSentence,
     showDictionary,
     hideDictionary,
     setDictionaryDataValue,

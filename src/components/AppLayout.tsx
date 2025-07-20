@@ -1,31 +1,19 @@
 import React from 'react';
 import { Header } from './Header';
 import { SettingsPanel } from './SettingsPanel';
-import { TextRenderer } from './TextRenderer';
 import { DictionaryPopup } from './DictionaryPopup';
+import { DictationRenderer } from './DictationRenderer';
+import { ReadingRenderer } from './ReadingRenderer';
 import { useAppStateContext } from '../contexts/AppStateContext';
 import { useSpeechContext } from '../contexts/SpeechContext';
 import { useTextManagement } from '../hooks/useTextManagement';
 
-interface AppLayoutProps {
-  // Only keep props that can't be easily moved to context
-  dictationInputs: Record<string, string>;
-  realTimeInputs: Record<string, string>;
-  onRealTimeInputUpdate: (sentence: string, sentenceIndex: number, input: string) => void;
-}
-
-export const AppLayout: React.FC<AppLayoutProps> = ({
-  dictationInputs,
-  realTimeInputs,
-  onRealTimeInputUpdate,
-}) => {
+export const AppLayout: React.FC = () => {
   const appState = useAppStateContext();
   const speech = useSpeechContext();
   
   // Get text management from hook
-  const textManagement = useTextManagement({
-    isDictationMode: appState.isDictationMode,
-  });
+  const textManagement = useTextManagement();
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans">
@@ -35,12 +23,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
         {/* Main Content */}
         <div className="flex-1">
-          <TextRenderer
-            processedHtml={textManagement.processedHtml}
-            dictationInputs={dictationInputs}
-            realTimeInputs={realTimeInputs}
-            onRealTimeInputUpdate={onRealTimeInputUpdate}
-          />
+          {appState.isDictationMode ? (
+            <DictationRenderer />
+          ) : (
+            <ReadingRenderer />
+          )}
         </div>
 
         {/* Settings Panel */}

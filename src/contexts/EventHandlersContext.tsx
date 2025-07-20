@@ -3,6 +3,7 @@ import { TextProcessor } from '../services/textProcessor';
 import { useAppStateContext } from './AppStateContext';
 import { useSpeechContext } from './SpeechContext';
 import { useDictionaryContext } from './DictionaryContext';
+import { useDictationContext } from './DictationContext';
 
 interface EventHandlersContextType {
   handleWordClick: (event: React.MouseEvent) => Promise<any>;
@@ -31,6 +32,7 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
   const appState = useAppStateContext();
   const speech = useSpeechContext();
   const { lookupWord } = useDictionaryContext();
+  const dictation = useDictationContext();
 
   // Handle word click with dictionary lookup
   const handleWordClick = useCallback(
@@ -82,7 +84,7 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
           
           if (appState.isDictationMode) {
             // Check if clicking on the currently active dictation sentence
-            if (appState.dictationSentenceIndex === sentenceIndex) {
+            if (dictation.currentSentenceIndex === sentenceIndex) {
               // Just speak the sentence without changing dictation state
               // This preserves focus on the input field
               setTimeout(() => {
@@ -90,7 +92,7 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
               }, 100);
             } else {
               // Set this sentence for dictation (different sentence)
-              appState.setDictationSentence(sentenceIndex);
+              dictation.setCurrentSentence(sentenceIndex);
               speech.jumpToSentence(sentenceIndex);
               // Still speak the sentence for audio reference
               setTimeout(() => {
@@ -175,14 +177,9 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
 
   // Handle dictation completion
   const handleDictationComplete = useCallback(() => {
-    // Auto-advance to next sentence or reset
-    if (appState.dictationSentenceIndex !== null && appState.dictationSentenceIndex < speech.sentences.length - 1) {
-      appState.setDictationSentence(appState.dictationSentenceIndex + 1);
-      speech.jumpToSentence(appState.dictationSentenceIndex + 1);
-    } else {
-      appState.setDictationSentence(null);
-    }
-  }, [appState.dictationSentenceIndex, speech, appState]);
+    // Use the dictation context's onComplete method
+    dictation.onComplete();
+  }, [dictation]);
 
   // Handle real-time input updates for all sentences
   const handleRealTimeInputUpdate = useCallback((_sentence: string, _sentenceIndex: number, _input: string) => {

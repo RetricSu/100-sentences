@@ -158,7 +158,7 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         value={userInput}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        className="absolute opacity-0 pointer-events-none"
+        className="absolute opacity-0"
         autoComplete="off"
         spellCheck={false}
       />

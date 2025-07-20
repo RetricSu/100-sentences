@@ -6,15 +6,18 @@ import { AppStateProvider } from './contexts/AppStateContext'
 import { SpeechProvider } from './contexts/SpeechContext'
 import { DictionaryProvider } from './contexts/DictionaryContext'
 import { EventHandlersProvider } from './contexts/EventHandlersContext'
+import { DictationProvider } from './contexts/DictationContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppStateProvider>
       <SpeechProvider>
         <DictionaryProvider>
-          <EventHandlersProvider>
-            <App />
-          </EventHandlersProvider>
+          <DictationProvider>
+            <EventHandlersProvider>
+              <App />
+            </EventHandlersProvider>
+          </DictationProvider>
         </DictionaryProvider>
       </SpeechProvider>
     </AppStateProvider>

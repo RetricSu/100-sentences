@@ -1,47 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
-import { useDictationStorage } from "./hooks/useDictationStorage";
+import { useEffect } from "react";
 import { useTextManagement } from "./hooks/useTextManagement";
-import { AppLayout } from "./components/AppLayout";
-import { DictationDisplayUtils } from "./utils/dictationDisplay";
-import { useAppStateContext } from "./contexts/AppStateContext";
 import { useSpeechContext } from "./contexts/SpeechContext";
+import { AppLayout } from "./components/AppLayout";
 
 function App() {
-  // Get app state from context
-  const appState = useAppStateContext();
-  
   // Get speech from context
   const speech = useSpeechContext();
 
-  // Dictation storage hook
-  const { getAllDictationInputs, isLoaded: isDictationStorageLoaded } = useDictationStorage();
-  
-  // Text management
-  const textManagement = useTextManagement({
-    isDictationMode: appState.isDictationMode,
-  });
-
-  // Reactive state for dictation inputs to ensure real-time updates
-  const [dictationInputs, setDictationInputs] = useState<Record<string, string>>({});
-  
-  // Real-time typed text for all sentences (not just the active one)
-  const [realTimeInputs, setRealTimeInputs] = useState<Record<string, string>>({});
-
-  // Handle real-time input updates for all sentences
-  const handleRealTimeInputUpdate = useCallback((sentence: string, sentenceIndex: number, input: string) => {
-    const sentenceId = DictationDisplayUtils.generateSentenceId(sentence.trim(), sentenceIndex);
-    setRealTimeInputs(prev => ({
-      ...prev,
-      [sentenceId]: input
-    }));
-  }, []);
-
-  // Sync dictation inputs in real-time
-  useEffect(() => {
-    if (isDictationStorageLoaded) {
-      setDictationInputs(getAllDictationInputs());
-    }
-  }, [isDictationStorageLoaded, getAllDictationInputs, appState.dictationSentenceIndex, appState.isDictationMode]);
+  // Text management for initialization
+  const textManagement = useTextManagement();
 
   // Initialize with default text if no text is loaded
   useEffect(() => {
@@ -67,13 +34,7 @@ function App() {
     );
   }
 
-  return (
-    <AppLayout
-      dictationInputs={dictationInputs}
-      realTimeInputs={realTimeInputs}
-      onRealTimeInputUpdate={handleRealTimeInputUpdate}
-    />
-  );
+  return <AppLayout />;
 }
 
 export default App;
