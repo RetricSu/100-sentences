@@ -3,6 +3,7 @@ import { Header } from './Header';
 import { SettingsPanel } from './SettingsPanel';
 import { DictionaryPopup } from './DictionaryPopup';
 import { DictationRenderer } from './dictation/DictationRenderer';
+import { RecitationRenderer } from './recitation/RecitationRenderer';
 import { ReadingRenderer } from './reading/ReadingRenderer';
 import { useAppStateContext } from '../contexts/AppStateContext';
 import { useSpeechContext } from '../contexts/SpeechContext';
@@ -25,6 +26,8 @@ export const AppLayout: React.FC = () => {
         <div className="w-full">
           {appState.isDictationMode ? (
             <DictationRenderer />
+          ) : appState.isRecitationMode ? (
+            <RecitationRenderer />
           ) : (
             <ReadingRenderer />
           )}
