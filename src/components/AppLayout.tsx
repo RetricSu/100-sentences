@@ -20,25 +20,37 @@ export const AppLayout: React.FC = () => {
       {/* Header */}
       <Header />
 
-      <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
-        {/* Main Content */}
-        <div className="flex-1">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Main Content - Full width when settings are closed */}
+        <div className="w-full">
           {appState.isDictationMode ? (
             <DictationRenderer />
           ) : (
             <ReadingRenderer />
           )}
         </div>
-
-        {/* Settings Panel */}
-        {appState.showSettings && (
-          <SettingsPanel
-            onTextUpdate={textManagement.handleTextUpdate}
-            defaultText={textManagement.defaultText}
-            displayText={speech.originalText}
-          />
-        )}
       </div>
+
+      {/* Floating Settings Panel */}
+      {appState.showSettings && (
+        <div className="fixed inset-0 z-50 flex items-start justify-end p-4 sm:p-6">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            onClick={appState.toggleSettings}
+          />
+          
+          {/* Settings Panel */}
+          <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-out">
+            <SettingsPanel
+              onTextUpdate={textManagement.handleTextUpdate}
+              defaultText={textManagement.defaultText}
+              displayText={speech.originalText}
+              onClose={appState.toggleSettings}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Dictionary Popup */}
       <DictionaryPopup />

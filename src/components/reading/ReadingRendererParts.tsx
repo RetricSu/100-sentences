@@ -9,7 +9,7 @@ export const Word: React.FC<{
   onClick 
 }) => (
   <span 
-    className="word cursor-pointer px-1 py-1 rounded-md hover:bg-emerald-100 hover:text-emerald-700 transition-colors duration-200 hover:shadow-sm"
+    className="word cursor-pointer px-1 py-1 rounded-md hover:bg-emerald-100 hover:text-emerald-700 transition-colors duration-200 hover:shadow-sm break-words"
     onClick={onClick}
   >
     {word}
@@ -36,14 +36,19 @@ export const Sentence: React.FC<{
   const shouldHighlight = isCurrentSentence && (isSpeaking || sentenceIndex > 0);
   
   const sentenceClass = shouldHighlight
-    ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 pl-4 rounded-r-lg shadow-sm"
-    : "sentence cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 rounded-lg transition-colors";
+    ? "current-sentence bg-emerald-100 border-l-4 border-emerald-400 pl-4 rounded-r-lg shadow-sm break-words"
+    : "sentence cursor-pointer hover:bg-emerald-50 hover:border-emerald-400 rounded-lg transition-colors break-words";
 
   return (
     <div 
       className={sentenceClass} 
       data-sentence-index={sentenceIndex}
       onClick={onClick}
+      style={{
+        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
+        maxWidth: '100%'
+      }}
     >
       {words.map((word, wordIndex) => (
         <Word 
@@ -75,8 +80,8 @@ export const Paragraph: React.FC<{
   isFirstParagraph 
 }) => {
   const paragraphClass = isFirstParagraph
-    ? "paragraph-block mb-8 first:mb-8"
-    : "paragraph-block mb-8 pt-4 border-t border-gray-100";
+    ? "paragraph-block mb-8 first:mb-8 w-full"
+    : "paragraph-block mb-8 pt-4 border-t border-gray-100 w-full";
 
   return (
     <div className={paragraphClass}>

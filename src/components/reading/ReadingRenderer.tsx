@@ -27,10 +27,15 @@ export const ReadingRenderer: React.FC = () => {
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 w-full">
       <div
         ref={contentRef}
-        className="prose-reading text-stone-800"
+        className="prose-reading text-stone-800 max-w-none mx-auto px-4 sm:px-6 lg:px-8"
+        style={{ 
+          maxWidth: '100%',
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word'
+        }}
       >
         {processedContent?.paragraphs.map((paragraph, paragraphIndex) => (
           <Paragraph

@@ -40,7 +40,10 @@
   }
   
   .sentence {
-    @apply inline-block text-xl px-6 py-4 my-2 w-full rounded-md transition-all duration-200 cursor-pointer hover:bg-emerald-50;
+    @apply inline-block text-xl px-6 py-4 my-2 w-full rounded-md transition-all duration-200 cursor-pointer hover:bg-emerald-50 break-words;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
   }
   
   .sentence:hover {
@@ -52,7 +55,9 @@
   }
   
   .word {
-    @apply px-4 py-2 rounded cursor-pointer transition-all duration-200 hover:bg-emerald-100;
+    @apply px-4 py-2 rounded cursor-pointer transition-all duration-200 hover:bg-emerald-100 break-words;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   
   .word:hover {
@@ -66,7 +71,10 @@
   }
   
   .prose-reading {
-    @apply prose-stone w-full;
+    @apply prose-stone w-full max-w-none;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
   
   .scrollbar-thin {
