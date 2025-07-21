@@ -111,18 +111,23 @@ export class WrongWordService {
     const userLetters = userWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
     
     if (targetLetters !== userLetters) {
-      // Only add if it's not already in the list (avoid duplicates)
-      const isDuplicate = wrongWords.some(w => 
-        w.word === targetWord && w.userInput === userWord
+      // Check if this word already exists in the wrong words list
+      const existingWordIndex = wrongWords.findIndex(w => 
+        w.word.toLowerCase().trim() === targetWord.toLowerCase().trim()
       );
-      
-      if (!isDuplicate) {
+
+      if (existingWordIndex >= 0) {
+        // Word already exists, add context if it's not already there
+        const existingEntry = wrongWords[existingWordIndex];
+        if (!existingEntry.sentenceContext.includes(sentenceContext)) {
+          existingEntry.sentenceContext.push(sentenceContext);
+        }
+      } else {
+        // New word, create new entry
         wrongWords.push({
           id: '', // Will be set by the hook
           word: targetWord,
-          correctSpelling: targetWord,
-          userInput: userWord,
-          sentenceContext,
+          sentenceContext: [sentenceContext],
           textTitle,
           createdAt: new Date(),
           practiceCount: 0,
@@ -136,12 +141,5 @@ export class WrongWordService {
    */
   static isWordWrong(targetWord: string, userWord: string): boolean {
     return targetWord.toLowerCase() !== userWord.toLowerCase();
-  }
-
-  /**
-   * Get the correct spelling for a word
-   */
-  static getCorrectSpelling(targetWord: string): string {
-    return targetWord.trim();
   }
 } 

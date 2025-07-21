@@ -11,9 +11,7 @@ export interface DictationStorage {
 export interface WrongWordEntry {
   id: string;
   word: string;
-  correctSpelling: string;
-  userInput: string;
-  sentenceContext: string;
+  sentenceContext: string[];
   textTitle: string;
   createdAt: Date;
   practiceCount: number;

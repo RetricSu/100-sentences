@@ -30,6 +30,9 @@ export const WrongWordSaveButton: React.FC = () => {
       const allInputs = dictationStorage.getAllDictationInputs();
       const textTitle = speech.originalText.trim().substring(0, 50) + (speech.originalText.length > 50 ? '...' : '');
       
+      let addedCount = 0;
+      let skippedCount = 0;
+      
       // Process each sentence that has input
       Object.entries(allInputs).forEach(([sentenceId, userInput]) => {
         if (!userInput.trim()) return;
@@ -50,12 +53,29 @@ export const WrongWordSaveButton: React.FC = () => {
         
         // Add each wrong word to the book
         wrongWords.forEach(wrongWord => {
-          wrongWordBook.addWrongWord(wrongWord);
+          // Check if this word is already in the book
+          if (wrongWordBook.isDuplicateWord(wrongWord.word)) {
+            skippedCount++;
+          } else {
+            wrongWordBook.addWrongWord(wrongWord);
+            addedCount++;
+          }
         });
       });
       
-      // Show success message
-      alert(`Saved ${Object.keys(allInputs).length} sentences with wrong words to your book!`);
+      // Show success message with details
+      let message = '';
+      if (addedCount > 0 && skippedCount > 0) {
+        message = `Added ${addedCount} new wrong words to your book. Skipped ${skippedCount} duplicates.`;
+      } else if (addedCount > 0) {
+        message = `Added ${addedCount} wrong words to your book!`;
+      } else if (skippedCount > 0) {
+        message = `All ${skippedCount} wrong words were already in your book.`;
+      } else {
+        message = 'No wrong words to save.';
+      }
+      
+      alert(message);
       
     } catch (error) {
       console.error('Error saving wrong words:', error);

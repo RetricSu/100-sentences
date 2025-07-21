@@ -8,8 +8,10 @@ export interface UseWrongWordBookReturn {
   removeWrongWord: (textId: string, entryId: string) => void;
   updatePracticeCount: (textId: string, entryId: string) => void;
   clearWrongWordBook: () => void;
+  clearWrongWordsByText: (textId: string) => void;
   getWrongWordsByText: (textId: string) => WrongWordEntry[];
   getAllWrongWords: () => WrongWordEntry[];
+  isDuplicateWord: (word: string) => boolean;
 }
 
 export const useWrongWordBook = (): UseWrongWordBookReturn => {
@@ -59,8 +61,24 @@ export const useWrongWordBook = (): UseWrongWordBookReturn => {
     return textTitle.trim().substring(0, 50).replace(/\s+/g, '-').toLowerCase();
   }, []);
 
-  // Add a wrong word entry
+  // Check if a word is already in the wrong word book
+  const isDuplicateWord = useCallback((word: string) => {
+    const normalizedWord = word.toLowerCase().trim();
+    return Object.values(wrongWordBook).some(text => 
+      text.entries.some(entry => 
+        entry.word.toLowerCase().trim() === normalizedWord
+      )
+    );
+  }, [wrongWordBook]);
+
+  // Add a wrong word entry with duplicate detection
   const addWrongWord = useCallback((entry: Omit<WrongWordEntry, 'id' | 'createdAt' | 'practiceCount'>) => {
+    // Check if this word is already in the wrong word book
+    if (isDuplicateWord(entry.word)) {
+      console.log(`Word "${entry.word}" is already in the wrong word book, skipping...`);
+      return;
+    }
+
     const textId = generateTextId(entry.textTitle);
     const newEntry: WrongWordEntry = {
       ...entry,
@@ -76,7 +94,7 @@ export const useWrongWordBook = (): UseWrongWordBookReturn => {
         entries: [...(prev[textId]?.entries || []), newEntry]
       }
     }));
-  }, [generateTextId]);
+  }, [generateTextId, isDuplicateWord]);
 
   // Remove a wrong word entry
   const removeWrongWord = useCallback((textId: string, entryId: string) => {
@@ -130,6 +148,15 @@ export const useWrongWordBook = (): UseWrongWordBookReturn => {
     setWrongWordBook({});
   }, []);
 
+  // Clear all wrong words for a specific text
+  const clearWrongWordsByText = useCallback((textId: string) => {
+    setWrongWordBook(prev => {
+      const newBook = { ...prev };
+      delete newBook[textId];
+      return newBook;
+    });
+  }, []);
+
   // Get wrong words for a specific text
   const getWrongWordsByText = useCallback((textId: string) => {
     return wrongWordBook[textId]?.entries || [];
@@ -147,7 +174,9 @@ export const useWrongWordBook = (): UseWrongWordBookReturn => {
     removeWrongWord,
     updatePracticeCount,
     clearWrongWordBook,
+    clearWrongWordsByText,
     getWrongWordsByText,
     getAllWrongWords,
+    isDuplicateWord,
   };
 }; 
