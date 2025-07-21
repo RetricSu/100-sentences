@@ -1,11 +1,15 @@
-import { useSpeechContext } from "./contexts/SpeechContext";
-import { AppLayout } from "./components/AppLayout";
-import { WrongWordBookPage } from "./components/pages/WrongWordBookPage";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React from 'react';
+import { useSpeechContext } from "../../contexts/SpeechContext";
+import { DictationRenderer } from '../dictation/DictationRenderer';
+import { RecitationRenderer } from '../recitation/RecitationRenderer';
+import { ReadingRenderer } from '../reading/ReadingRenderer';
+import { useAppStateContext } from '../../contexts/AppStateContext';
+import { BaseLayout } from '../layout/BaseLayout';
 
-function App() {
+const HomePage: React.FC = () => {
   // Get speech from context
   const speech = useSpeechContext();
+  const appState = useAppStateContext();
 
   if (!speech.isSupported) {
     return (
@@ -24,14 +28,25 @@ function App() {
     );
   }
 
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<AppLayout />} />
-        <Route path="/wrong-words" element={<WrongWordBookPage />} />
-      </Routes>
-    </Router>
-  );
-}
+  const renderMainContent = () => {
+    return (
+      <div className="w-full">
+        {appState.isDictationMode ? (
+          <DictationRenderer />
+        ) : appState.isRecitationMode ? (
+          <RecitationRenderer />
+        ) : (
+          <ReadingRenderer />
+        )}
+      </div>
+    );
+  };
 
-export default App;
+  return (
+    <BaseLayout>
+      {renderMainContent()}
+    </BaseLayout>
+  );
+};
+
+export default HomePage; 

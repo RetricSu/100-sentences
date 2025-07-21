@@ -4,7 +4,6 @@ import { useSpeechContext } from "../contexts/SpeechContext";
 import { useDictionaryContext } from "../contexts/DictionaryContext";
 import { useDictationContext } from "../contexts/DictationContext";
 import { useRecitationContext } from "../contexts/RecitationContext";
-import { useLocation, useNavigate } from "react-router-dom";
 
 export const Header: React.FC = () => {
   const appState = useAppStateContext();
@@ -12,15 +11,17 @@ export const Header: React.FC = () => {
   const dictionary = useDictionaryContext();
   const dictation = useDictationContext();
   const recitation = useRecitationContext();
-  const location = useLocation();
-  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">百句斩</h1>
+            <h1 className="text-2xl font-bold">
+              <a href="/" rel="noopener noreferrer">
+                百句斩
+              </a>
+            </h1>
             {/* Dictionary status indicator */}
             <div className="flex items-center gap-2 text-sm">
               {dictionary.isLoading ? (
@@ -69,19 +70,6 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Back button for wrong word book */}
-            {location.pathname === '/wrong-words' && (
-              <button
-                onClick={() => navigate('/')}
-                className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back
-              </button>
-            )}
-
             {/* Standby button */}
             <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-sm">
               <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
@@ -153,8 +141,8 @@ export const Header: React.FC = () => {
                   speech.jumpToSentence(speech.currentSentenceIndex + 1)
                 }
                 disabled={
-                  speech.currentSentenceIndex ===
-                    speech.sentences.length - 1 || speech.isSpeaking
+                  speech.currentSentenceIndex === speech.sentences.length - 1 ||
+                  speech.isSpeaking
                 }
                 className="px-3 py-2 bg-gray-100 text-gray-600 hover:text-gray-800 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Next sentence"
@@ -177,13 +165,15 @@ export const Header: React.FC = () => {
               {/* Progress indicator */}
               <div className="px-3 py-2 bg-gray-100 text-gray-500 text-sm border-l border-gray-200">
                 {speech.sentences.length > 0
-                  ? `${speech.currentSentenceIndex + 1}/${speech.sentences.length}`
+                  ? `${speech.currentSentenceIndex + 1}/${
+                      speech.sentences.length
+                    }`
                   : "No text"}
               </div>
             </div>
 
             {/* Mode buttons - only show when not in wrong word book */}
-            {location.pathname !== '/wrong-words' && (
+            {
               <>
                 {/* Dictation mode button */}
                 <button
@@ -255,31 +245,7 @@ export const Header: React.FC = () => {
                   跟读模式
                 </button>
               </>
-            )}
-
-            {/* Wrong Word Book button - only show when not in wrong word book */}
-            {location.pathname !== '/wrong-words' && (
-              <button
-                onClick={() => navigate('/wrong-words')}
-                className="px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-sm bg-gray-100 text-gray-600 hover:bg-gray-200"
-                title="Wrong Word Book"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                错词本
-              </button>
-            )}
+            }
 
             {/* Settings button */}
             <button
