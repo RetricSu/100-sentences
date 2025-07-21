@@ -19,26 +19,25 @@ export class WrongWordService {
     const tokens = targetText.split(/(\s+)/);
     let globalLetterIndex = 0;
     const wrongWords: WrongWordEntry[] = [];
-    const currentWordChars: string[] = [];
-    const currentUserChars: string[] = [];
+    let currentWord = '';
+    let currentWordHasWrongChar = false;
 
     // Process each token (word or space)
     for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex++) {
       const token = tokens[tokenIndex];
       
       if (token.trim() === '') {
-        // Space - process accumulated word if any
-        if (currentWordChars.length > 0) {
-          this.processAccumulatedWord(
-            currentWordChars.join(''),
-            currentUserChars.join(''),
+        // Space - process accumulated word if it has wrong characters
+        if (currentWord && currentWordHasWrongChar) {
+          this.processWrongWord(
+            currentWord,
             sentenceContext,
             textTitle,
             wrongWords
           );
-          currentWordChars.length = 0;
-          currentUserChars.length = 0;
         }
+        currentWord = '';
+        currentWordHasWrongChar = false;
       } else {
         // Word with letters
         const cleanWord = this.extractCleanWord(token);
@@ -56,30 +55,27 @@ export class WrongWordService {
                 const isCorrect = userChar.toLowerCase() === char.toLowerCase();
                 
                 if (!isCorrect) {
-                  // This character is wrong (would be red in display)
-                  currentWordChars.push(char);
-                  currentUserChars.push(userChar);
+                  // This character is wrong - mark the whole word as having wrong characters
+                  currentWordHasWrongChar = true;
                 }
               }
               globalLetterIndex++;
-            } else {
-              // Punctuation within word
-              currentWordChars.push(char);
             }
+            // Always add the character to the current word (both correct and wrong chars)
+            currentWord += char;
           }
           
           // Process the word if it has wrong characters
-          if (currentWordChars.length > 0) {
-            this.processAccumulatedWord(
-              currentWordChars.join(''),
-              currentUserChars.join(''),
+          if (currentWord && currentWordHasWrongChar) {
+            this.processWrongWord(
+              currentWord,
               sentenceContext,
               textTitle,
               wrongWords
             );
-            currentWordChars.length = 0;
-            currentUserChars.length = 0;
           }
+          currentWord = '';
+          currentWordHasWrongChar = false;
         }
       }
     }
@@ -95,44 +91,37 @@ export class WrongWordService {
   }
 
   /**
-   * Process accumulated word and add to wrong words if it contains wrong characters
+   * Process wrong word and add to wrong words list
    */
-  private static processAccumulatedWord(
+  private static processWrongWord(
     targetWord: string,
-    userWord: string,
     sentenceContext: string,
     textTitle: string,
     wrongWords: WrongWordEntry[]
   ): void {
-    if (userWord.length === 0) return;
+    if (!targetWord.trim()) return;
 
-    // Check if this word contains any wrong characters
-    const targetLetters = targetWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const userLetters = userWord.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    
-    if (targetLetters !== userLetters) {
-      // Check if this word already exists in the wrong words list
-      const existingWordIndex = wrongWords.findIndex(w => 
-        w.word.toLowerCase().trim() === targetWord.toLowerCase().trim()
-      );
+    // Check if this word already exists in the wrong words list
+    const existingWordIndex = wrongWords.findIndex(w => 
+      w.word.toLowerCase().trim() === targetWord.toLowerCase().trim()
+    );
 
-      if (existingWordIndex >= 0) {
-        // Word already exists, add context if it's not already there
-        const existingEntry = wrongWords[existingWordIndex];
-        if (!existingEntry.sentenceContext.includes(sentenceContext)) {
-          existingEntry.sentenceContext.push(sentenceContext);
-        }
-      } else {
-        // New word, create new entry
-        wrongWords.push({
-          id: '', // Will be set by the hook
-          word: targetWord,
-          sentenceContext: [sentenceContext],
-          textTitle,
-          createdAt: new Date(),
-          practiceCount: 0,
-        });
+    if (existingWordIndex >= 0) {
+      // Word already exists, add context if it's not already there
+      const existingEntry = wrongWords[existingWordIndex];
+      if (!existingEntry.sentenceContext.includes(sentenceContext)) {
+        existingEntry.sentenceContext.push(sentenceContext);
       }
+    } else {
+      // New word, create new entry
+      wrongWords.push({
+        id: '', // Will be set by the hook
+        word: targetWord,
+        sentenceContext: [sentenceContext],
+        textTitle,
+        createdAt: new Date(),
+        practiceCount: 0,
+      });
     }
   }
 
