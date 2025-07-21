@@ -1,18 +1,12 @@
 import React, { useRef } from 'react';
 import { useSpeechContext } from '../../contexts/SpeechContext';
 import { useEventHandlersContext } from '../../contexts/EventHandlersContext';
-import { Paragraph } from './ReadingRendererParts';
-import { processTextToStructuredData } from '../../utils/textProcessing';
+import { ReadingSentenceRenderer } from './ReadingSentenceRenderer';
 
 export const ReadingRenderer: React.FC = () => {
   const speech = useSpeechContext();
   const eventHandlers = useEventHandlersContext();
   const contentRef = useRef<HTMLDivElement>(null);
-
-  // Process text into structured data instead of HTML
-  const processedContent = React.useMemo(() => {
-    return processTextToStructuredData(speech.originalText);
-  }, [speech.originalText]);
 
   // Don't render if no text is loaded
   if (!speech.originalText.trim()) {
@@ -37,18 +31,13 @@ export const ReadingRenderer: React.FC = () => {
           overflowWrap: 'break-word'
         }}
       >
-        {processedContent?.paragraphs.map((paragraph, paragraphIndex) => (
-          <Paragraph
-            key={`paragraph-${paragraphIndex}`}
-            sentences={paragraph.sentences}
-            sentenceIndices={paragraph.sentenceIndices}
-            currentSentenceIndex={speech.currentSentenceIndex}
-            isSpeaking={speech.isSpeaking}
-            onSentenceClick={eventHandlers.handleSentenceClick}
-            onWordClick={eventHandlers.handleWordClick}
-            isFirstParagraph={paragraph.isFirstParagraph}
-          />
-        ))}
+        <ReadingSentenceRenderer
+          sentences={speech.sentences}
+          currentSentenceIndex={speech.currentSentenceIndex}
+          isSpeaking={speech.isSpeaking}
+          onSentenceClick={eventHandlers.handleSentenceClick}
+          onWordClick={eventHandlers.handleWordClick}
+        />
       </div>
     </div>
   );
