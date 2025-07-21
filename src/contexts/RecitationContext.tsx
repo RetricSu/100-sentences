@@ -43,6 +43,7 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
   
   // Use ref to always get current value in speech recognition callback
   const currentSentenceIndexRef = useRef<number | null>(null);
+  const shouldBeListeningRef = useRef<boolean>(false);
 
 
 
@@ -98,16 +99,34 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognitionInstance = new SpeechRecognition();
     
-    recognitionInstance.continuous = false;
+    recognitionInstance.continuous = true;
     recognitionInstance.interimResults = true;
-    recognitionInstance.lang = 'en-US';
+    recognitionInstance.lang = 'zh-CN';
 
     recognitionInstance.onstart = () => {
+      console.log('Speech recognition started');
       setIsListening(true);
+      shouldBeListeningRef.current = true;
     };
 
     recognitionInstance.onend = () => {
+      console.log('Speech recognition ended');
       setIsListening(false);
+      
+      // In continuous mode, if we're still supposed to be listening, restart
+      // This handles cases where the browser ends recognition unexpectedly
+      if (shouldBeListeningRef.current && recognition) {
+        console.log('Restarting speech recognition...');
+        setTimeout(() => {
+          if (shouldBeListeningRef.current && recognition) {
+            try {
+              recognition.start();
+            } catch (error) {
+              console.error('Error restarting speech recognition:', error);
+            }
+          }
+        }, 100);
+      }
     };
 
     recognitionInstance.onresult = (event) => {
@@ -125,21 +144,51 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
 
       console.log('Speech recognition result:', { finalTranscript, interimTranscript, currentSentenceIndex: currentSentenceIndexRef.current });
 
-      if (finalTranscript && currentSentenceIndexRef.current !== null) {
+      if (currentSentenceIndexRef.current !== null) {
         const currentSentence = speech.sentences[currentSentenceIndexRef.current];
-        console.log('Updating input with:', finalTranscript, 'for sentence:', currentSentence);
-        updateInput(currentSentence, currentSentenceIndexRef.current, finalTranscript);
-      } else if (interimTranscript && currentSentenceIndexRef.current !== null) {
-        // Also update with interim results for real-time feedback
-        const currentSentence = speech.sentences[currentSentenceIndexRef.current];
-        console.log('Updating interim input with:', interimTranscript);
-        updateInput(currentSentence, currentSentenceIndexRef.current, interimTranscript);
+        const sentenceId = RecitationDisplayUtils.generateSentenceId(currentSentence.trim(), currentSentenceIndexRef.current);
+        
+        // Get current input for this sentence
+        const currentInput = activeInputs[sentenceId] || '';
+        
+        if (finalTranscript) {
+          // For continuous mode, accumulate the final transcript
+          const newInput = currentInput + finalTranscript;
+          console.log('Updating input with:', newInput, 'for sentence:', currentSentence);
+          updateInput(currentSentence, currentSentenceIndexRef.current, newInput);
+        } else if (interimTranscript) {
+          // For interim results, show current accumulated + interim for real-time feedback
+          const displayInput = currentInput + interimTranscript;
+          console.log('Updating interim input with:', displayInput);
+          updateInput(currentSentence, currentSentenceIndexRef.current, displayInput);
+        }
       }
     };
 
     recognitionInstance.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      setIsListening(false);
+      
+      // Handle specific error types
+      if (event.error === 'no-speech') {
+        console.log('No speech detected, but continuing to listen...');
+        // Don't stop listening for no-speech errors in continuous mode
+        return;
+      }
+      
+      if (event.error === 'audio-capture') {
+        console.error('Audio capture error - microphone may not be available');
+        setIsListening(false);
+      }
+      
+      if (event.error === 'not-allowed') {
+        console.error('Microphone permission denied');
+        setIsListening(false);
+      }
+      
+      // For other errors, stop listening
+      if (event.error !== 'no-speech') {
+        setIsListening(false);
+      }
     };
 
     setRecognition(recognitionInstance);
@@ -147,9 +196,16 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
 
   // Start listening for speech
   const startListening = useCallback(() => {
-    console.log('Starting speech recognition...');
+    console.log('Starting speech recognition...', { recognition: !!recognition, isListening });
     if (recognition && !isListening) {
-      recognition.start();
+      try {
+        shouldBeListeningRef.current = true;
+        recognition.start();
+        console.log('Speech recognition start() called successfully');
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        shouldBeListeningRef.current = false;
+      }
     } else {
       console.log('Cannot start: recognition =', !!recognition, 'isListening =', isListening);
     }
@@ -157,9 +213,15 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
 
   // Stop listening for speech
   const stopListening = useCallback(() => {
-    console.log('Stopping speech recognition...');
+    console.log('Stopping speech recognition...', { recognition: !!recognition, isListening });
     if (recognition && isListening) {
-      recognition.stop();
+      try {
+        shouldBeListeningRef.current = false;
+        recognition.stop();
+        console.log('Speech recognition stop() called successfully');
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+      }
     } else {
       console.log('Cannot stop: recognition =', !!recognition, 'isListening =', isListening);
     }
