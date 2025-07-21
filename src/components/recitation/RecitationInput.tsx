@@ -29,6 +29,12 @@ export const RecitationInput: React.FC<RecitationInputProps> = ({
   );
   const userInput = recitation.activeInputs[sentenceId] || initialInput;
 
+  // Get word matching information
+  const matchingInfo = useMemo(() => {
+    if (!userInput.trim()) return null;
+    return RecitationDisplayUtils.getWordMatchingInfo(targetText, userInput);
+  }, [targetText, userInput]);
+
   // Check completion and save to storage when userInput changes
   useEffect(() => {
     if (!isLoaded || !userInput) return;
@@ -83,15 +89,45 @@ export const RecitationInput: React.FC<RecitationInputProps> = ({
       </div>
 
       {/* Recognition text display */}
-      <div className="mt-4 text-left">
-        {userInput && (
-          <div className="text-gray-400 font-medium text-sm">{userInput}</div>
+      <div className="flex gap-5 items-center mt-4 text-left rounded-lg">
+        {/* Word matching statistics */}
+        {matchingInfo && (
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <div className="flex justify-between items-center">
+              <span
+                className={`font-bold px-2 py-1 rounded-md ${
+                  matchingInfo.accuracy >= 80
+                    ? "text-green-700 bg-green-100"
+                    : matchingInfo.accuracy >= 60
+                    ? "text-yellow-700 bg-yellow-100"
+                    : "text-red-700 bg-red-100"
+                }`}
+              >
+                {Math.round(matchingInfo.accuracy)}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-800">
+                <span className="text-green-600">
+                  {matchingInfo.correctWords}
+                </span>
+                <span className="text-gray-500">/</span>
+                <span className="text-gray-800">{matchingInfo.totalWords}</span>
+                <span className="text-gray-500"> correct</span>
+                {matchingInfo.partialWords > 0 && (
+                  <span className="text-yellow-600 ml-1">
+                    , {matchingInfo.partialWords} partial
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
         )}
       </div>
 
       {/* Progress indicator */}
       {isCompleted && (
-        <div className="mt-2 text-sm text-green-600 font-medium text-center">
+        <div className="mt-3 p-2 text-sm text-green-700 font-medium text-center bg-green-50 border border-green-200 rounded-lg">
           ✓ Completed!
         </div>
       )}

@@ -57,6 +57,7 @@ export interface RecitationValidationResult {
   correctWords: number;
   totalWords: number;
   userWords: number;
+  partialWords?: number;
 }
 
 export interface RecitationProgressStats {
@@ -67,4 +68,5 @@ export interface RecitationProgressStats {
   overallAccuracy: number;
   totalWords: number;
   totalCorrectWords: number;
+  totalPartialWords?: number;
 } 
