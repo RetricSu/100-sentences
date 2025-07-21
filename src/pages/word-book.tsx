@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useWrongWordBook } from "../hooks/useWrongWordBook";
 import { WrongWordEntry } from "../types/dictation";
 import { BaseLayout } from "../components/layout/BaseLayout";
+import { useAppStateContext } from "../contexts/AppStateContext";
+import { useDictionaryContext } from "../contexts/DictionaryContext";
 
 export const WrongWordBookPage: React.FC = () => {
   const wrongWordBook = useWrongWordBook();
@@ -73,9 +75,7 @@ export const WrongWordBookPage: React.FC = () => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold mb-2">No Wrong Words Yet</h2>
-            <p className="text-sm">
-              开始默写练习，收集错词。
-            </p>
+            <p className="text-sm">开始默写练习，收集错词。</p>
           </div>
         </div>
       </BaseLayout>
@@ -332,6 +332,8 @@ const WrongWordEntryItem: React.FC<{
   textId: string;
 }> = ({ entry, textId }) => {
   const wrongWordBook = useWrongWordBook();
+  const appState = useAppStateContext();
+  const dictionary = useDictionaryContext();
 
   // Check if this word appears in multiple contexts
   const wordAppearances = Object.values(wrongWordBook.wrongWordBook).flatMap(
@@ -389,49 +391,30 @@ const WrongWordEntryItem: React.FC<{
               </svg>
               Added: {entry.createdAt.toLocaleDateString()}
             </span>
-            <span className="flex items-center gap-1">
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Practiced: {entry.practiceCount} times
-            </span>
-            {entry.lastPracticed && (
-              <span className="flex items-center gap-1">
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Last: {entry.lastPracticed.toLocaleDateString()}
-              </span>
-            )}
           </div>
         </div>
 
         <div className="flex gap-2 ml-6">
           <button
+            onClick={async () => {
+              appState.showDictionary(entry.word);
+              try {
+                const result = await dictionary.lookupWord(entry.word);
+                appState.setDictionaryDataValue(result);
+              } catch (error) {
+                console.error("Error looking up word:", error);
+              }
+            }}
+            className="px-4 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-medium flex items-center gap-1"
+            title="Look up in dictionary"
+          >
+            词典
+          </button>
+          <button
             onClick={handleRemove}
             className="px-4 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
           >
-            Remove
+            删除
           </button>
         </div>
       </div>
