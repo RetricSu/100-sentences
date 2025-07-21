@@ -12,15 +12,15 @@ export const WrongWordBookPage: React.FC = () => {
   // Handle Escape key to close confirmation dialogs
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setShowClearAllConfirm(false);
         setShowClearTextConfirm(false);
       }
     };
 
     if (showClearAllConfirm || showClearTextConfirm) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [showClearAllConfirm, showClearTextConfirm]);
 
@@ -40,11 +40,13 @@ export const WrongWordBookPage: React.FC = () => {
 
   if (!wrongWordBook.isLoaded) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-stone-500">
-          <p>Loading wrong word book...</p>
+      <BaseLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-stone-500">
+            <p>Loading wrong word book...</p>
+          </div>
         </div>
-      </div>
+      </BaseLayout>
     );
   }
 
@@ -52,29 +54,31 @@ export const WrongWordBookPage: React.FC = () => {
 
   if (textIds.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center text-stone-500">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-orange-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
+      <BaseLayout>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-stone-500">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-8 h-8 text-orange-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold mb-2">No Wrong Words Yet</h2>
+            <p className="text-sm">
+              开始默写练习，收集错词。
+            </p>
           </div>
-          <h2 className="text-xl font-semibold mb-2">No Wrong Words Yet</h2>
-          <p className="text-sm">
-            Start practicing dictation to collect wrong words for review.
-          </p>
         </div>
-      </div>
+      </BaseLayout>
     );
   }
 
@@ -89,9 +93,7 @@ export const WrongWordBookPage: React.FC = () => {
         {/* Text Selection */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Select Text
-            </h2>
+            <h2 className="text-xl font-semibold text-gray-800">Select Text</h2>
             <button
               onClick={() => setShowClearAllConfirm(true)}
               className="px-4 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors flex items-center gap-2 shadow-sm"
@@ -153,14 +155,41 @@ export const WrongWordBookPage: React.FC = () => {
                   {/* Statistics */}
                   <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
-                      {new Set(selectedWrongWords.map(w => w.word.toLowerCase().trim())).size} unique words
+                      {
+                        new Set(
+                          selectedWrongWords.map((w) =>
+                            w.word.toLowerCase().trim()
+                          )
+                        ).size
+                      }{" "}
+                      unique words
                     </span>
                     <span className="flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                       {selectedWrongWords.length} total entries
                     </span>
@@ -208,14 +237,27 @@ export const WrongWordBookPage: React.FC = () => {
           <div className="bg-white rounded-xl p-6 max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Clear All Wrong Words</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Clear All Wrong Words
+              </h3>
             </div>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to remove ALL wrong words from your book? This action cannot be undone.
+              Are you sure you want to remove ALL wrong words from your book?
+              This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
@@ -241,14 +283,27 @@ export const WrongWordBookPage: React.FC = () => {
           <div className="bg-white rounded-xl p-6 max-w-md mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                <svg
+                  className="w-6 h-6 text-orange-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Clear Text Wrong Words</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Clear Text Wrong Words
+              </h3>
             </div>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to remove all wrong words from "{selectedText.textTitle}"? This action cannot be undone.
+              Are you sure you want to remove all wrong words from "
+              {selectedText.textTitle}"? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
@@ -279,8 +334,11 @@ const WrongWordEntryItem: React.FC<{
   const wrongWordBook = useWrongWordBook();
 
   // Check if this word appears in multiple contexts
-  const wordAppearances = Object.values(wrongWordBook.wrongWordBook).flatMap(text => 
-    text.entries.filter(e => e.word.toLowerCase().trim() === entry.word.toLowerCase().trim())
+  const wordAppearances = Object.values(wrongWordBook.wrongWordBook).flatMap(
+    (text) =>
+      text.entries.filter(
+        (e) => e.word.toLowerCase().trim() === entry.word.toLowerCase().trim()
+      )
   );
   const isMultiContext = wordAppearances.length > 1;
 
