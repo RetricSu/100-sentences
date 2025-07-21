@@ -101,7 +101,7 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
     
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = true;
-    recognitionInstance.lang = 'zh-CN';
+    recognitionInstance.lang = 'en-US';
 
     recognitionInstance.onstart = () => {
       console.log('Speech recognition started');

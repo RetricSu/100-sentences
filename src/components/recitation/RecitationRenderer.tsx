@@ -2,6 +2,8 @@ import React from 'react';
 import { useRecitationContext } from '../../contexts/RecitationContext';
 import { useSpeechContext } from '../../contexts/SpeechContext';
 import { RecitationSentenceRenderer } from './RecitationSentenceRenderer';
+import { RecitationMicrophone } from './RecitationMicrophone';
+import { RecitationSpeechDisplay } from './RecitationSpeechDisplay';
 
 export const RecitationRenderer: React.FC = () => {
   const recitation = useRecitationContext();
@@ -20,7 +22,7 @@ export const RecitationRenderer: React.FC = () => {
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 relative">
       <RecitationSentenceRenderer
         sentences={speech.sentences}
         recitationSentenceIndex={recitation.currentSentenceIndex}
@@ -30,6 +32,8 @@ export const RecitationRenderer: React.FC = () => {
         activeInputs={recitation.activeInputs}
         onRecitationComplete={recitation.onComplete}
       />
+      <RecitationSpeechDisplay />
+      <RecitationMicrophone />
     </div>
   );
 }; 
