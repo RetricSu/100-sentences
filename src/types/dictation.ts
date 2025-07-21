@@ -7,6 +7,24 @@ export interface DictationStorage {
   [sentenceId: string]: string;
 }
 
+// Wrong word book types
+export interface WrongWordEntry {
+  id: string;
+  word: string;
+  sentenceContext: string[];
+  textTitle: string;
+  createdAt: Date;
+  practiceCount: number;
+  lastPracticed?: Date;
+}
+
+export interface WrongWordBook {
+  [textId: string]: {
+    textTitle: string;
+    entries: WrongWordEntry[];
+  };
+}
+
 export interface DictationProgressStats {
   totalCharacters: number;
   typedCharacters: number;

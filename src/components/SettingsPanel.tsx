@@ -1,6 +1,7 @@
 import React from "react";
 import { SavedText } from "../hooks/useLocalStorage";
 import { useSettingsPanel } from "../hooks/useSettingsPanel";
+import { useNavigate } from "react-router-dom";
 
 interface VoiceOption {
   voice: SpeechSynthesisVoice;
@@ -9,13 +10,13 @@ interface VoiceOption {
 interface SettingsPanelProps {
   // Core functionality - the main output
   onTextUpdate: (text: string) => void;
-  
+
   // Optional default text
   defaultText?: string;
-  
+
   // Current display text (for saving)
   displayText: string;
-  
+
   // Close function
   onClose?: () => void;
 }
@@ -34,15 +35,15 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     saveTextTitle,
     setSaveTextTitle,
     showSavedTexts,
-    
+
     // Saved texts
     savedTexts,
     savedTextsLoading,
-    
+
     // Voice and rate settings
     selectedVoiceInfo,
     rate,
-    
+
     // Actions
     handleConvert,
     handleSaveText,
@@ -55,24 +56,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     clearAllTexts,
   } = useSettingsPanel({ onTextUpdate, defaultText, displayText });
 
+  const navigate = useNavigate();
+
   // Get available voices from the browser
   const [voices, setVoices] = React.useState<VoiceOption[]>([]);
-  const [selectedVoice, setSelectedVoice] = React.useState<SpeechSynthesisVoice | null>(null);
+  const [selectedVoice, setSelectedVoice] =
+    React.useState<SpeechSynthesisVoice | null>(null);
 
   // Load voices and sync with saved voice info
   React.useEffect(() => {
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
       const englishVoices = availableVoices
-        .filter(voice => voice.lang.startsWith('en'))
+        .filter((voice) => voice.lang.startsWith("en"))
         .map((voice, index) => ({ voice, index }));
-      
+
       setVoices(englishVoices);
 
       // Try to restore saved voice
       if (selectedVoiceInfo) {
-        const savedVoice = englishVoices.find(v => 
-          v.voice.name === selectedVoiceInfo.name && v.voice.lang === selectedVoiceInfo.lang
+        const savedVoice = englishVoices.find(
+          (v) =>
+            v.voice.name === selectedVoiceInfo.name &&
+            v.voice.lang === selectedVoiceInfo.lang
         )?.voice;
         if (savedVoice) {
           setSelectedVoice(savedVoice);
@@ -81,22 +87,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       }
 
       // Auto-select best voice if no saved voice
-      const bestVoice = englishVoices.find(v => 
-        v.voice.lang === 'en-US' && v.voice.name.includes('Microsoft')
-      )?.voice ||
-      englishVoices.find(v => 
-        v.voice.lang === 'en-US' && v.voice.name.includes('David')
-      )?.voice ||
-      englishVoices.find(v => 
-        v.voice.lang === 'en-US' && v.voice.name.includes('Zira')
-      )?.voice ||
-      englishVoices.find(v => 
-        v.voice.lang === 'en-US' && v.voice.localService
-      )?.voice ||
-      englishVoices.find(v => 
-        v.voice.lang.startsWith('en') && v.voice.localService
-      )?.voice ||
-      englishVoices[0]?.voice;
+      const bestVoice =
+        englishVoices.find(
+          (v) => v.voice.lang === "en-US" && v.voice.name.includes("Microsoft")
+        )?.voice ||
+        englishVoices.find(
+          (v) => v.voice.lang === "en-US" && v.voice.name.includes("David")
+        )?.voice ||
+        englishVoices.find(
+          (v) => v.voice.lang === "en-US" && v.voice.name.includes("Zira")
+        )?.voice ||
+        englishVoices.find(
+          (v) => v.voice.lang === "en-US" && v.voice.localService
+        )?.voice ||
+        englishVoices.find(
+          (v) => v.voice.lang.startsWith("en") && v.voice.localService
+        )?.voice ||
+        englishVoices[0]?.voice;
 
       if (bestVoice) {
         setSelectedVoice(bestVoice);
@@ -112,35 +119,79 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   }, [selectedVoiceInfo]);
 
   // Handle voice selection change
-  const handleVoiceSelectChange = React.useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const index = parseInt(e.target.value);
-    if (index >= 0 && voices[index]) {
-      const voice = voices[index].voice;
-      setSelectedVoice(voice);
-      handleVoiceChange(voice);
-    }
-  }, [voices, handleVoiceChange]);
+  const handleVoiceSelectChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const index = parseInt(e.target.value);
+      if (index >= 0 && voices[index]) {
+        const voice = voices[index].voice;
+        setSelectedVoice(voice);
+        handleVoiceChange(voice);
+      }
+    },
+    [voices, handleVoiceChange]
+  );
 
   // Handle rate slider change
-  const handleRateSliderChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newRate = parseFloat(e.target.value);
-    handleRateChange(newRate);
-  }, [handleRateChange]);
+  const handleRateSliderChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newRate = parseFloat(e.target.value);
+      handleRateChange(newRate);
+    },
+    [handleRateChange]
+  );
+
+  // Handle navigate to wrong word book page
+  const handleNavigateToWrongWordBookPage = React.useCallback(() => {
+    navigate("/wrong-words");
+    onClose?.();
+  }, [navigate]);
 
   return (
     <div className="w-full bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-stone-100 pb-4">
-        <h3 className="font-semibold text-stone-800 text-lg">
-          设置      
-        </h3>
+        <h3 className="font-semibold text-stone-800 text-lg">设置</h3>
         <button
           onClick={onClose}
           className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
           title="关闭设置"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
+        </button>
+      </div>
+
+      {/* Show word book page */}
+      <div>
+        <button
+          onClick={handleNavigateToWrongWordBookPage}
+          className="px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-sm bg-gray-100 text-gray-600 hover:bg-gray-200"
+          title="Wrong Word Book"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          打开错词本
         </button>
       </div>
 
@@ -155,7 +206,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           placeholder="输入英文文本或留空使用默认文本"
           className="w-full h-24 p-3 border border-stone-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors text-sm"
         />
-        
+
         <div className="flex gap-2">
           <button
             onClick={handleConvert}
@@ -206,7 +257,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             ) : savedTexts.length === 0 ? (
               <div className="text-center text-stone-500 py-4">
                 <p className="text-sm">暂无保存文本</p>
-                <p className="text-xs mt-1 text-stone-400">保存您的第一个文本开始使用</p>
+                <p className="text-xs mt-1 text-stone-400">
+                  保存您的第一个文本开始使用
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -281,7 +334,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <label className="block text-sm font-medium text-stone-700">
           默写管理
         </label>
-        
+
         <button
           onClick={handleClearDictationInputs}
           className="w-full btn-secondary text-sm text-amber-600 border-amber-200 hover:bg-amber-50"
@@ -289,10 +342,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         >
           清除默写进度
         </button>
-        
-        <p className="text-xs text-stone-500">
-          这将清除所有句子的默写输入记录
-        </p>
+
+        <p className="text-xs text-stone-500">这将清除所有句子的默写输入记录</p>
       </div>
     </div>
   );
@@ -317,16 +368,14 @@ const SavedTextItem: React.FC<SavedTextItemProps> = ({
     <div className="bg-white p-3 rounded-lg border border-stone-200 hover:border-stone-300 transition-colors shadow-soft">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-stone-900 truncate text-sm"
-          >
+          <h4 className="font-medium text-stone-900 truncate text-sm">
             {savedText.title}
           </h4>
-          <p className="text-xs text-stone-500 mt-1"
-          >
-            {savedText.createdAt.toLocaleDateString()} {savedText.createdAt.toLocaleTimeString()}
+          <p className="text-xs text-stone-500 mt-1">
+            {savedText.createdAt.toLocaleDateString()}{" "}
+            {savedText.createdAt.toLocaleTimeString()}
           </p>
-          <p className="text-xs text-stone-600 mt-1 line-clamp-2"
-          >
+          <p className="text-xs text-stone-600 mt-1 line-clamp-2">
             {savedText.content.substring(0, 100)}...
           </p>
         </div>
@@ -336,9 +385,18 @@ const SavedTextItem: React.FC<SavedTextItemProps> = ({
             className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors"
             title="加载此文本"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
             </svg>
           </button>
           <button
@@ -346,13 +404,22 @@ const SavedTextItem: React.FC<SavedTextItemProps> = ({
             className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-md transition-colors"
             title="删除此文本"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </button>
         </div>
       </div>
     </div>
   );
-}; 
+};

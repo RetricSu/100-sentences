@@ -1,15 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App'
-import { AppStateProvider } from './contexts/AppStateContext'
-import { SpeechProvider } from './contexts/SpeechContext'
-import { DictionaryProvider } from './contexts/DictionaryContext'
-import { EventHandlersProvider } from './contexts/EventHandlersContext'
-import { DictationProvider } from './contexts/DictationContext'
-import { RecitationProvider } from './contexts/RecitationContext'
+import "./index.css";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { AppStateProvider } from "./contexts/AppStateContext";
+import { SpeechProvider } from "./contexts/SpeechContext";
+import { DictionaryProvider } from "./contexts/DictionaryContext";
+import { EventHandlersProvider } from "./contexts/EventHandlersContext";
+import { DictationProvider } from "./contexts/DictationContext";
+import { RecitationProvider } from "./contexts/RecitationContext";
+import { AppRouter } from "./router";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AppStateProvider>
       <SpeechProvider>
@@ -17,12 +17,12 @@ createRoot(document.getElementById('root')!).render(
           <DictationProvider>
             <RecitationProvider>
               <EventHandlersProvider>
-                <App />
+                <AppRouter />
               </EventHandlersProvider>
             </RecitationProvider>
           </DictationProvider>
         </DictionaryProvider>
       </SpeechProvider>
     </AppStateProvider>
-  </StrictMode>,
-)
+  </StrictMode>
+);

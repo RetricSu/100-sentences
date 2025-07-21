@@ -90,6 +90,8 @@ export const useAppState = () => {
     return lastSelectedText;
   }, [lastSelectedText]);
 
+
+
   return {
     // State
     showSettings,

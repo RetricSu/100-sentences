@@ -17,7 +17,11 @@ export const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">百句斩</h1>
+            <h1 className="text-2xl font-bold">
+              <a href="/" rel="noopener noreferrer">
+                百句斩
+              </a>
+            </h1>
             {/* Dictionary status indicator */}
             <div className="flex items-center gap-2 text-sm">
               {dictionary.isLoading ? (
@@ -137,8 +141,8 @@ export const Header: React.FC = () => {
                   speech.jumpToSentence(speech.currentSentenceIndex + 1)
                 }
                 disabled={
-                  speech.currentSentenceIndex ===
-                    speech.sentences.length - 1 || speech.isSpeaking
+                  speech.currentSentenceIndex === speech.sentences.length - 1 ||
+                  speech.isSpeaking
                 }
                 className="px-3 py-2 bg-gray-100 text-gray-600 hover:text-gray-800 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Next sentence"
@@ -161,80 +165,87 @@ export const Header: React.FC = () => {
               {/* Progress indicator */}
               <div className="px-3 py-2 bg-gray-100 text-gray-500 text-sm border-l border-gray-200">
                 {speech.sentences.length > 0
-                  ? `${speech.currentSentenceIndex + 1}/${speech.sentences.length}`
+                  ? `${speech.currentSentenceIndex + 1}/${
+                      speech.sentences.length
+                    }`
                   : "No text"}
               </div>
             </div>
 
-            {/* Dictation mode button */}
-            <button
-              onClick={() => {
-                if (appState.isDictationMode) {
-                  appState.toggleDictationMode();
-                  dictation.deactivate();
-                } else {
-                  appState.toggleDictationMode();
-                  dictation.activate();
-                }
-              }}
-              disabled={speech.isSpeaking}
-              className={`px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm ${
-                appState.isDictationMode
-                  ? "bg-blue-500 text-white hover:bg-blue-600"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-              title="切换默写模式"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
-              默写模式
-            </button>
+            {/* Mode buttons - only show when not in wrong word book */}
+            {
+              <>
+                {/* Dictation mode button */}
+                <button
+                  onClick={() => {
+                    if (appState.isDictationMode) {
+                      appState.toggleDictationMode();
+                      dictation.deactivate();
+                    } else {
+                      appState.toggleDictationMode();
+                      dictation.activate();
+                    }
+                  }}
+                  disabled={speech.isSpeaking}
+                  className={`px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm ${
+                    appState.isDictationMode
+                      ? "bg-blue-500 text-white hover:bg-blue-600"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                  title="切换默写模式"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                  默写模式
+                </button>
 
-            {/* Recitation mode button */}
-            <button
-              onClick={() => {
-                if (appState.isRecitationMode) {
-                  appState.toggleRecitationMode();
-                  recitation.deactivate();
-                } else {
-                  appState.toggleRecitationMode();
-                  recitation.activate();
-                }
-              }}
-              disabled={speech.isSpeaking}
-              className={`px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm ${
-                appState.isRecitationMode
-                  ? "bg-purple-500 text-white hover:bg-purple-600"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-              title="切换朗读模式"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                />
-              </svg>
-              跟读模式
-            </button>
+                {/* Recitation mode button */}
+                <button
+                  onClick={() => {
+                    if (appState.isRecitationMode) {
+                      appState.toggleRecitationMode();
+                      recitation.deactivate();
+                    } else {
+                      appState.toggleRecitationMode();
+                      recitation.activate();
+                    }
+                  }}
+                  disabled={speech.isSpeaking}
+                  className={`px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm ${
+                    appState.isRecitationMode
+                      ? "bg-purple-500 text-white hover:bg-purple-600"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                  title="切换朗读模式"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                  跟读模式
+                </button>
+              </>
+            }
 
             {/* Settings button */}
             <button
