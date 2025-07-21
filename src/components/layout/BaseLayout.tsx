@@ -4,6 +4,7 @@ import { SettingsPanel } from '../SettingsPanel';
 import { DictionaryPopup } from '../DictionaryPopup';
 import { useAppStateContext } from '../../contexts/AppStateContext';
 import { useTextManagement } from '../../hooks/useTextManagement';
+import { useSpeechContext } from '../../contexts/SpeechContext';
 
 interface BaseLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
 }) => {
   const appState = useAppStateContext();
   const textManagement = useTextManagement();
+  const speech = useSpeechContext();
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans flex flex-col">
@@ -56,7 +58,7 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
             <SettingsPanel
               onTextUpdate={textManagement.handleTextUpdate}
               defaultText={textManagement.defaultText}
-              displayText=""
+              displayText={speech.originalText}
               onClose={appState.toggleSettings}
             />
           </div>
