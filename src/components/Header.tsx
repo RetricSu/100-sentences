@@ -178,7 +178,11 @@ export const Header: React.FC = () => {
                 }
               }}
               disabled={speech.isSpeaking}
-              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+              className={`px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm ${
+                appState.isDictationMode
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
               title="切换默写模式"
             >
               <svg
@@ -209,7 +213,11 @@ export const Header: React.FC = () => {
                 }
               }}
               disabled={speech.isSpeaking}
-              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+              className={`px-4 py-2 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm ${
+                appState.isRecitationMode
+                  ? "bg-purple-500 text-white hover:bg-purple-600"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
               title="切换朗读模式"
             >
               <svg
