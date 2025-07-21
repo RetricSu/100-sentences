@@ -152,15 +152,14 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
         const currentInput = activeInputs[sentenceId] || '';
         
         if (finalTranscript) {
-          // For continuous mode, accumulate the final transcript
-          const newInput = currentInput + finalTranscript;
-          console.log('Updating input with:', newInput, 'for sentence:', currentSentence);
-          updateInput(currentSentence, currentSentenceIndexRef.current, newInput);
+          // In continuous mode, the final transcript should be the complete transcript
+          // We should replace the current input with the new complete transcript
+          console.log('Updating input with:', finalTranscript, 'for sentence:', currentSentence);
+          updateInput(currentSentence, currentSentenceIndexRef.current, finalTranscript);
         } else if (interimTranscript) {
-          // For interim results, show current accumulated + interim for real-time feedback
-          const displayInput = currentInput + interimTranscript;
-          console.log('Updating interim input with:', displayInput);
-          updateInput(currentSentence, currentSentenceIndexRef.current, displayInput);
+          // For interim results, show the complete transcript so far
+          console.log('Updating interim input with:', interimTranscript);
+          updateInput(currentSentence, currentSentenceIndexRef.current, interimTranscript);
         }
       }
     };

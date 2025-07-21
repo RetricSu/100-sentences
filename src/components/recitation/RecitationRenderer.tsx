@@ -32,7 +32,6 @@ export const RecitationRenderer: React.FC = () => {
         activeInputs={recitation.activeInputs}
         onRecitationComplete={recitation.onComplete}
       />
-      <RecitationSpeechDisplay />
       <RecitationMicrophone />
     </div>
   );
