@@ -1,4 +1,5 @@
 import { RecitationStorage, RecitationProgressStats, RecitationValidationResult } from '../types/recitation';
+import { RecitationDisplayUtils } from '../utils/recitationDisplay';
 
 /**
  * Service layer for recitation business logic
@@ -53,25 +54,18 @@ export class RecitationService {
   }
 
   /**
-   * Validate user input against target text
+   * Validate user input against target text with enhanced word matching
    */
   static validateInput(targetText: string, userInput: string): RecitationValidationResult {
-    const targetWords = this.extractCleanWords(targetText);
-    const userWords = userInput.toLowerCase().split(/\s+/).filter(word => word.length > 0);
-    
-    const correctWords = targetWords.filter((word, index) => 
-      userWords[index] && word.toLowerCase() === userWords[index].toLowerCase()
-    );
-    
-    const accuracy = targetWords.length > 0 ? (correctWords.length / targetWords.length) * 100 : 0;
-    const isComplete = this.checkCompletion(targetText, userInput);
+    const matchingInfo = RecitationDisplayUtils.getWordMatchingInfo(targetText, userInput);
     
     return {
-      accuracy,
-      isComplete,
-      correctWords: correctWords.length,
-      totalWords: targetWords.length,
-      userWords: userWords.length
+      accuracy: matchingInfo.accuracy,
+      isComplete: this.checkCompletion(targetText, userInput),
+      correctWords: matchingInfo.correctWords,
+      totalWords: matchingInfo.totalWords,
+      userWords: userInput.toLowerCase().split(/\s+/).filter(word => word.length > 0).length,
+      partialWords: matchingInfo.partialWords
     };
   }
 
@@ -87,6 +81,7 @@ export class RecitationService {
     let totalAccuracy = 0;
     let totalWords = 0;
     let totalCorrectWords = 0;
+    let totalPartialWords = 0;
 
     sentences.forEach((sentence, index) => {
       const sentenceId = this.generateSentenceId(sentence.trim(), index);
@@ -103,6 +98,7 @@ export class RecitationService {
         totalAccuracy += validation.accuracy;
         totalWords += validation.totalWords;
         totalCorrectWords += validation.correctWords;
+        totalPartialWords += validation.partialWords || 0;
       }
     });
 
@@ -117,7 +113,8 @@ export class RecitationService {
       averageAccuracy,
       overallAccuracy,
       totalWords,
-      totalCorrectWords
+      totalCorrectWords,
+      totalPartialWords
     };
   }
 } 
