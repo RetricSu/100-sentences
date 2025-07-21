@@ -44,6 +44,7 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
   // Use ref to always get current value in speech recognition callback
   const currentSentenceIndexRef = useRef<number | null>(null);
   const shouldBeListeningRef = useRef<boolean>(false);
+  const sessionTranscriptRef = useRef<string>('');
 
 
 
@@ -68,6 +69,8 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
   const setCurrentSentence = useCallback((index: number | null) => {
     setCurrentSentenceIndex(index);
     currentSentenceIndexRef.current = index;
+    // Reset session transcript when switching sentences
+    sessionTranscriptRef.current = '';
   }, []);
 
   // Update input for a sentence
@@ -107,6 +110,7 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
       console.log('Speech recognition started');
       setIsListening(true);
       shouldBeListeningRef.current = true;
+      sessionTranscriptRef.current = '';
     };
 
     recognitionInstance.onend = () => {
@@ -146,20 +150,18 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
 
       if (currentSentenceIndexRef.current !== null) {
         const currentSentence = speech.sentences[currentSentenceIndexRef.current];
-        const sentenceId = RecitationDisplayUtils.generateSentenceId(currentSentence.trim(), currentSentenceIndexRef.current);
-        
-        // Get current input for this sentence
-        const currentInput = activeInputs[sentenceId] || '';
         
         if (finalTranscript) {
-          // In continuous mode, the final transcript should be the complete transcript
-          // We should replace the current input with the new complete transcript
-          console.log('Updating input with:', finalTranscript, 'for sentence:', currentSentence);
-          updateInput(currentSentence, currentSentenceIndexRef.current, finalTranscript);
+          // Accumulate the final transcript for this session
+          sessionTranscriptRef.current += finalTranscript;
+          console.log('Session transcript:', sessionTranscriptRef.current);
+          console.log('Updating input with:', sessionTranscriptRef.current, 'for sentence:', currentSentence);
+          updateInput(currentSentence, currentSentenceIndexRef.current, sessionTranscriptRef.current);
         } else if (interimTranscript) {
-          // For interim results, show the complete transcript so far
-          console.log('Updating interim input with:', interimTranscript);
-          updateInput(currentSentence, currentSentenceIndexRef.current, interimTranscript);
+          // For interim results, show the accumulated transcript + interim
+          const displayTranscript = sessionTranscriptRef.current + interimTranscript;
+          console.log('Updating interim input with:', displayTranscript);
+          updateInput(currentSentence, currentSentenceIndexRef.current, displayTranscript);
         }
       }
     };
@@ -216,6 +218,7 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
     if (recognition && isListening) {
       try {
         shouldBeListeningRef.current = false;
+        sessionTranscriptRef.current = '';
         recognition.stop();
         console.log('Speech recognition stop() called successfully');
       } catch (error) {

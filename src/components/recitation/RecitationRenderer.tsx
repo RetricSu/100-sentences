@@ -3,7 +3,6 @@ import { useRecitationContext } from '../../contexts/RecitationContext';
 import { useSpeechContext } from '../../contexts/SpeechContext';
 import { RecitationSentenceRenderer } from './RecitationSentenceRenderer';
 import { RecitationMicrophone } from './RecitationMicrophone';
-import { RecitationSpeechDisplay } from './RecitationSpeechDisplay';
 
 export const RecitationRenderer: React.FC = () => {
   const recitation = useRecitationContext();
