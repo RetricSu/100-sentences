@@ -4,6 +4,7 @@ import useLocalStorageState from 'use-local-storage-state';
 export interface AppState {
   showSettings: boolean;
   isDictationMode: boolean;
+  isRecitationMode: boolean;
   dictionaryVisible: boolean;
   currentWord: string;
   dictionaryData: any | null;
@@ -14,6 +15,7 @@ export interface AppState {
 export interface AppStateActions {
   toggleSettings: () => void;
   toggleDictationMode: () => void;
+  toggleRecitationMode: () => void;
   showDictionary: (word: string) => void;
   hideDictionary: () => void;
   setDictionaryDataValue: (data: any) => void;
@@ -27,6 +29,7 @@ export type UseAppStateReturn = AppState & AppStateActions;
 export const useAppState = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isDictationMode, setIsDictationMode] = useState(false);
+  const [isRecitationMode, setIsRecitationMode] = useState(false);
   const [dictionaryVisible, setDictionaryVisible] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
   const [dictionaryData, setDictionaryData] = useState<any | null>(null);
@@ -43,7 +46,19 @@ export const useAppState = () => {
 
   const toggleDictationMode = useCallback(() => {
     setIsDictationMode(!isDictationMode);
-  }, [isDictationMode]);
+    // Turn off recitation mode when switching to dictation
+    if (isRecitationMode) {
+      setIsRecitationMode(false);
+    }
+  }, [isDictationMode, isRecitationMode]);
+
+  const toggleRecitationMode = useCallback(() => {
+    setIsRecitationMode(!isRecitationMode);
+    // Turn off dictation mode when switching to recitation
+    if (isDictationMode) {
+      setIsDictationMode(false);
+    }
+  }, [isRecitationMode, isDictationMode]);
 
   const showDictionary = useCallback((word: string) => {
     setCurrentWord(word);
@@ -79,6 +94,7 @@ export const useAppState = () => {
     // State
     showSettings,
     isDictationMode,
+    isRecitationMode,
     dictionaryVisible,
     currentWord,
     dictionaryData,
@@ -88,6 +104,7 @@ export const useAppState = () => {
     // Actions
     toggleSettings,
     toggleDictationMode,
+    toggleRecitationMode,
     showDictionary,
     hideDictionary,
     setDictionaryDataValue,

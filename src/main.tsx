@@ -7,6 +7,7 @@ import { SpeechProvider } from './contexts/SpeechContext'
 import { DictionaryProvider } from './contexts/DictionaryContext'
 import { EventHandlersProvider } from './contexts/EventHandlersContext'
 import { DictationProvider } from './contexts/DictationContext'
+import { RecitationProvider } from './contexts/RecitationContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,9 +15,11 @@ createRoot(document.getElementById('root')!).render(
       <SpeechProvider>
         <DictionaryProvider>
           <DictationProvider>
-            <EventHandlersProvider>
-              <App />
-            </EventHandlersProvider>
+            <RecitationProvider>
+              <EventHandlersProvider>
+                <App />
+              </EventHandlersProvider>
+            </RecitationProvider>
           </DictationProvider>
         </DictionaryProvider>
       </SpeechProvider>

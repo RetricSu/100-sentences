@@ -3,12 +3,14 @@ import { useAppStateContext } from "../contexts/AppStateContext";
 import { useSpeechContext } from "../contexts/SpeechContext";
 import { useDictionaryContext } from "../contexts/DictionaryContext";
 import { useDictationContext } from "../contexts/DictationContext";
+import { useRecitationContext } from "../contexts/RecitationContext";
 
 export const Header: React.FC = () => {
   const appState = useAppStateContext();
   const speech = useSpeechContext();
   const dictionary = useDictionaryContext();
   const dictation = useDictationContext();
+  const recitation = useRecitationContext();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-stone-200">
@@ -193,6 +195,37 @@ export const Header: React.FC = () => {
                 />
               </svg>
               默写模式
+            </button>
+
+            {/* Recitation mode button */}
+            <button
+              onClick={() => {
+                if (appState.isRecitationMode) {
+                  appState.toggleRecitationMode();
+                  recitation.deactivate();
+                } else {
+                  appState.toggleRecitationMode();
+                  recitation.activate();
+                }
+              }}
+              disabled={speech.isSpeaking}
+              className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+              title="切换朗读模式"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+              背诵模式
             </button>
 
             {/* Settings button */}

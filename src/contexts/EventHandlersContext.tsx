@@ -3,6 +3,7 @@ import { useAppStateContext } from './AppStateContext';
 import { useSpeechContext } from './SpeechContext';
 import { useDictionaryContext } from './DictionaryContext';
 import { useDictationContext } from './DictationContext';
+import { useRecitationContext } from './RecitationContext';
 import { extractCleanWord } from '../utils/textProcessing';
 
 interface EventHandlersContextType {
@@ -33,6 +34,7 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
   const speech = useSpeechContext();
   const { lookupWord } = useDictionaryContext();
   const dictation = useDictationContext();
+  const recitation = useRecitationContext();
 
   // Handle word click with dictionary lookup
   const handleWordClick = useCallback(
@@ -99,6 +101,14 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
                 speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
               }, 100);
             }
+          } else if (appState.isRecitationMode) {
+            // Recitation mode - set this sentence for recitation
+            recitation.setCurrentSentence(sentenceIndex);
+            speech.jumpToSentence(sentenceIndex);
+            // Speak the sentence for audio reference
+            setTimeout(() => {
+              speech.speak(speech.sentences[sentenceIndex], sentenceIndex);
+            }, 100);
           } else {
             // Normal mode - navigate to sentence and speak it
             speech.jumpToSentence(sentenceIndex);
@@ -110,7 +120,7 @@ export const EventHandlersProvider: React.FC<EventHandlersProviderProps> = ({ ch
         }
       }
     },
-    [speech, appState]
+    [speech, appState, dictation, recitation]
   );
 
   // Combined click handler
