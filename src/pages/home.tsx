@@ -1,10 +1,10 @@
 import React from 'react';
-import { useSpeechContext } from "../../contexts/SpeechContext";
-import { DictationRenderer } from '../dictation/DictationRenderer';
-import { RecitationRenderer } from '../recitation/RecitationRenderer';
-import { ReadingRenderer } from '../reading/ReadingRenderer';
-import { useAppStateContext } from '../../contexts/AppStateContext';
-import { BaseLayout } from '../layout/BaseLayout';
+import { useSpeechContext } from "../contexts/SpeechContext";
+import { DictationRenderer } from '../components/dictation/DictationRenderer';
+import { RecitationRenderer } from '../components/recitation/RecitationRenderer';
+import { ReadingRenderer } from '../components/reading/ReadingRenderer';
+import { useAppStateContext } from '../contexts/AppStateContext';
+import { BaseLayout } from '../components/layout/BaseLayout';
 
 const HomePage: React.FC = () => {
   // Get speech from context

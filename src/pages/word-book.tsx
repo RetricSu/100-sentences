@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useWrongWordBook } from "../../hooks/useWrongWordBook";
-import { WrongWordEntry } from "../../types/dictation";
-import { BaseLayout } from "../layout/BaseLayout";
+import { useWrongWordBook } from "../hooks/useWrongWordBook";
+import { WrongWordEntry } from "../types/dictation";
+import { BaseLayout } from "../components/layout/BaseLayout";
 
 export const WrongWordBookPage: React.FC = () => {
   const wrongWordBook = useWrongWordBook();

@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HomePage from "./components/pages/home";
-import { WrongWordBookPage } from "./components/pages/word-book";
+import HomePage from "./pages/home";
+import { WrongWordBookPage } from "./pages/word-book";
 
 export function AppRouter() {
   return (
