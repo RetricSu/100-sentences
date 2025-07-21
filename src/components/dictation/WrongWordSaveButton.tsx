@@ -37,11 +37,28 @@ export const WrongWordSaveButton: React.FC = () => {
       Object.entries(allInputs).forEach(([sentenceId, userInput]) => {
         if (!userInput.trim()) return;
         
-        // Extract sentence index from sentenceId (format: "index-textHash")
-        const sentenceIndex = parseInt(sentenceId.split('-')[0]);
-        const targetSentence = speech.sentences[sentenceIndex];
+        // Extract sentence index and content hash from sentenceId (format: "index-textHash")
+        const parts = sentenceId.split('-');
+        const storedContentHash = parts.slice(1).join('-'); // Rejoin in case content hash contains dashes
         
-        if (!targetSentence) return;
+        // Find the matching sentence in current text by content hash
+        let targetSentence: string | null = null;
+        
+        for (let i = 0; i < speech.sentences.length; i++) {
+          const currentSentence = speech.sentences[i];
+          const currentContentHash = currentSentence.trim().substring(0, 50);
+          
+          if (currentContentHash === storedContentHash) {
+            targetSentence = currentSentence;
+            break;
+          }
+        }
+        
+        // If no matching sentence found, skip this entry
+        if (!targetSentence) {
+          console.warn(`No matching sentence found for stored ID: ${sentenceId}`);
+          return;
+        }
         
         // Detect wrong words for this sentence
         const wrongWords = WrongWordService.detectWrongWords(
