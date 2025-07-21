@@ -130,6 +130,8 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     return;
   };
 
+
+
   // Generate display text with word-by-word progression
   const generateDisplayText = () => {
     if (!targetText) return "";

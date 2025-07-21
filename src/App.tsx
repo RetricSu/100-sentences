@@ -1,5 +1,7 @@
 import { useSpeechContext } from "./contexts/SpeechContext";
 import { AppLayout } from "./components/AppLayout";
+import { WrongWordBookPage } from "./components/pages/WrongWordBookPage";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 function App() {
   // Get speech from context
@@ -22,7 +24,14 @@ function App() {
     );
   }
 
-  return <AppLayout />;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<AppLayout />} />
+        <Route path="/wrong-words" element={<WrongWordBookPage />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;
