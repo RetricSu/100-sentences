@@ -61,7 +61,26 @@ export class DictationDisplayUtils {
               const userChar = userLetters[globalLetterIndex];
               const isCurrentPosition = showCursor && globalLetterIndex === cursorPosition;
               
-              if (globalLetterIndex < userLetters.length) {
+              if (isCurrentPosition && globalLetterIndex < userLetters.length) {
+                // Current cursor position over a typed character - show character with cursor overlay
+                const isCorrect = userChar && userChar.toLowerCase() === char.toLowerCase();
+                charResults.push(
+                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block relative min-w-[1ch]">
+                    <span className="text-gray-200 select-none">_</span>
+                    <span className={`absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium`}>
+                      {userChar}
+                    </span>
+                    <span className="absolute inset-0 bg-gray-400 animate-pulse opacity-50"></span>
+                  </span>
+                );
+              } else if (isCurrentPosition) {
+                // Current cursor position over future character - show cursor
+                charResults.push(
+                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block min-w-[1ch] text-gray-800 bg-gray-400 animate-pulse opacity-50">
+                    _
+                  </span>
+                );
+              } else if (globalLetterIndex < userLetters.length) {
                 // Character has been typed
                 const isCorrect = userChar && userChar.toLowerCase() === char.toLowerCase();
                 charResults.push(
@@ -70,13 +89,6 @@ export class DictationDisplayUtils {
                     <span className={`absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium`}>
                       {userChar}
                     </span>
-                  </span>
-                );
-              } else if (isCurrentPosition) {
-                // Current cursor position
-                charResults.push(
-                  <span key={`${tokenIndex}-${charIndex}`} className="inline-block min-w-[1ch] text-gray-800 bg-emerald-100 animate-pulse">
-                    _
                   </span>
                 );
               } else {
@@ -97,6 +109,15 @@ export class DictationDisplayUtils {
               );
             }
           });
+          
+          // Add cursor after the last character if user has completed typing
+          if (showCursor && globalLetterIndex === userLetters.length && cursorPosition === userLetters.length) {
+            charResults.push(
+              <span key={`${tokenIndex}-cursor-end`} className="inline-block min-w-[1ch] text-gray-800 bg-gray-400 animate-pulse opacity-50">
+                _
+              </span>
+            );
+          }
           result.push(
             <span key={tokenIndex}>
               {charResults}
@@ -136,14 +157,21 @@ export class DictationDisplayUtils {
               const userChar = userLetters[globalLetterIndex];
               const isCurrentPosition = showCursor && globalLetterIndex === cursorPosition;
               
-              if (globalLetterIndex < userLetters.length && userChar) {
+              if (isCurrentPosition && globalLetterIndex < userLetters.length && userChar) {
+                const isCorrect = userChar.toLowerCase() === char.toLowerCase();
+                result += `<span class="inline-block relative min-w-[1ch]">
+                  <span class="text-gray-200 select-none">_</span>
+                  <span class="absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium">${userChar}</span>
+                  <span class="absolute inset-0 bg-gray-400 animate-pulse opacity-50"></span>
+                </span>`;
+              } else if (isCurrentPosition) {
+                result += `<span class="inline-block min-w-[1ch] text-gray-800 bg-gray-400 animate-pulse opacity-50">_</span>`;
+              } else if (globalLetterIndex < userLetters.length && userChar) {
                 const isCorrect = userChar.toLowerCase() === char.toLowerCase();
                 result += `<span class="inline-block relative min-w-[1ch]">
                   <span class="text-gray-200 select-none">_</span>
                   <span class="absolute inset-0 flex items-center justify-center ${isCorrect ? 'text-green-600' : 'text-red-600'} font-medium">${userChar}</span>
                 </span>`;
-              } else if (isCurrentPosition) {
-                result += `<span class="inline-block min-w-[1ch] text-gray-800 bg-emerald-100 animate-pulse">_</span>`;
               } else {
                 result += `<span class="inline-block min-w-[1ch] text-gray-400">_</span>`;
               }
@@ -151,6 +179,11 @@ export class DictationDisplayUtils {
             } else {
               result += `<span class="text-gray-700">${char}</span>`;
             }
+          }
+          
+          // Add cursor after the last character if user has completed typing
+          if (showCursor && globalLetterIndex === userLetters.length && cursorPosition === userLetters.length) {
+            result += `<span class="inline-block min-w-[1ch] text-gray-800 bg-gray-400 animate-pulse opacity-50">_</span>`;
           }
         }
       }

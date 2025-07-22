@@ -116,6 +116,13 @@ export class DictationService {
   }
 
   /**
+   * Get the target letter count (excluding spaces and punctuation)
+   */
+  static getTargetLetterCount(targetText: string): number {
+    return targetText.replace(/[^a-zA-Z]/g, '').length;
+  }
+
+  /**
    * Process storage data for bulk operations
    */
   static processBulkStorage(

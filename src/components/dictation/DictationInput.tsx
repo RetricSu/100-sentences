@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useDictationStorage } from "../../hooks/useDictationStorage";
+import { useCursorPosition } from "../../hooks/useCursorPosition";
 import { DictationDisplayUtils } from "../../utils/dictationDisplay";
 import { DictationService } from "../../services/dictationService";
 import { DictationInputProps } from "../../types/dictation";
@@ -15,12 +16,9 @@ export const DictationInput: React.FC<DictationInputProps> = ({
 }) => {
   const [userInput, setUserInput] = useState(initialInput);
   const [isCompleted, setIsCompleted] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   
+  const { cursorPosition, inputRef, handleCursorEvent } = useCursorPosition();
   const { saveDictationInput, isLoaded } = useDictationStorage();
-
-
-
 
   // Save current text when sentence changes
   useEffect(() => {
@@ -110,36 +108,86 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     return () => document.removeEventListener('click', handleDocumentClick);
   }, [isVisible, isLoaded]);
 
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
     // Only allow letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
     
-    // Check if we should auto-add a space after a completed word
-    const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
+    // Get target letter count (excluding spaces and punctuation)
+    const targetLetterCount = DictationService.getTargetLetterCount(targetText);
+    const currentLetterCount = filteredValue.replace(/\s+/g, '').length;
     
-    const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
-    setUserInput(newValue);
-    onInputChange?.(newValue);
+    // Check if adding this input would exceed the target length
+    if (currentLetterCount > targetLetterCount) {
+      // Truncate to target length
+      const truncatedValue = truncateToTargetLength(filteredValue, targetLetterCount);
+      setUserInput(truncatedValue);
+      onInputChange?.(truncatedValue);
+    } else {
+      // Check if we should auto-add a space after a completed word
+      const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
+      
+      const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
+      setUserInput(newValue);
+      onInputChange?.(newValue);
+    }
+    
+    // Update cursor position after input change
+    handleCursorEvent();
+  };
+
+  // Helper method to truncate input to target length
+  const truncateToTargetLength = (input: string, targetLength: number): string => {
+    const letters = input.replace(/\s+/g, '');
+    if (letters.length <= targetLength) {
+      return input;
+    }
+    
+    // Truncate letters to target length
+    const truncatedLetters = letters.substring(0, targetLength);
+    
+    // Reconstruct the string with spaces in their original positions
+    let result = '';
+    let letterIndex = 0;
+    
+    for (let i = 0; i < input.length && letterIndex < targetLength; i++) {
+      if (input[i] === ' ') {
+        result += ' ';
+      } else {
+        result += truncatedLetters[letterIndex];
+        letterIndex++;
+      }
+    }
+    
+    return result;
   };
 
   const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Allow all keys for typing
-    return;
+    // Update cursor position after key events
+    handleCursorEvent();
   };
 
+  const handleKeyUp = (_e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Update cursor position after key events
+    handleCursorEvent();
+  };
 
+  const handleClick = (_e: React.MouseEvent<HTMLInputElement>) => {
+    // Update cursor position after mouse events
+    handleCursorEvent();
+  };
 
   // Generate display text with word-by-word progression
   const generateDisplayText = () => {
     if (!targetText) return "";
 
-    const cursorPosition = DictationService.getNextCharacterPosition(targetText, userInput);
+    // Convert cursor position to letter position (excluding spaces)
+    const letterPosition = userInput.substring(0, cursorPosition).replace(/[^a-zA-Z]/g, '').length;
+    
     return DictationDisplayUtils.generateMaskedDisplay(targetText, userInput, {
       showCursor: true,
-      cursorPosition
+      cursorPosition: letterPosition
     });
   };
 
@@ -160,6 +208,8 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         value={userInput}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        onClick={handleClick}
         className="absolute opacity-0"
         autoComplete="off"
         spellCheck={false}
