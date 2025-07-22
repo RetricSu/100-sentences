@@ -29,13 +29,37 @@ export const RecitationInput: React.FC<RecitationInputProps> = ({
   );
   const userInput = recitation.activeInputs[sentenceId] || initialInput;
 
+  // Save current text when component unmounts
+  useEffect(() => {
+    return () => {
+      // Save current text when component unmounts
+      if (isLoaded && userInput.trim()) {
+        saveRecitationInput(targetText, sentenceIndex, userInput);
+      }
+    };
+  }, [targetText, sentenceIndex, saveRecitationInput, isLoaded, userInput]);
+
+  // Save current state before page unload
+  useEffect(() => {
+    if (!isVisible || !isLoaded) return;
+
+    const handleBeforeUnload = () => {
+      if (userInput.trim()) {
+        saveRecitationInput(targetText, sentenceIndex, userInput);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isVisible, isLoaded, userInput, targetText, sentenceIndex, saveRecitationInput]);
+
   // Get word matching information
   const matchingInfo = useMemo(() => {
     if (!userInput.trim()) return null;
     return RecitationDisplayUtils.getWordMatchingInfo(targetText, userInput);
   }, [targetText, userInput]);
 
-  // Check completion and save to storage when userInput changes
+  // Check completion when userInput changes
   useEffect(() => {
     if (!isLoaded || !userInput) return;
 
@@ -50,13 +74,9 @@ export const RecitationInput: React.FC<RecitationInputProps> = ({
     } else {
       setIsCompleted(false);
     }
-
-    // Save to storage
-    saveRecitationInput(targetText, sentenceIndex, userInput);
   }, [
     targetText,
     sentenceIndex,
-    saveRecitationInput,
     isLoaded,
     userInput,
     onComplete,
