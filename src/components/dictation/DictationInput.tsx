@@ -20,17 +20,17 @@ export const DictationInput: React.FC<DictationInputProps> = ({
   const { cursorPosition, inputRef, handleCursorEvent } = useCursorPosition();
   const { saveDictationInput, isLoaded } = useDictationStorage();
 
-  // Save current text when sentence changes
+  // Save current text when component unmounts or sentence changes
   useEffect(() => {
     return () => {
-      // Save current text when component unmounts or sentence changes
+      // Save current text when component unmounts
       if (isLoaded) {
         saveDictationInput(targetText, sentenceIndex, userInput);
       }
     };
-  }, [targetText, sentenceIndex, saveDictationInput, isLoaded, userInput]);
+  }, [targetText, sentenceIndex, saveDictationInput, isLoaded]);
 
-  // Handle user input changes: immediate display update, saving, and parent notification
+  // Handle user input changes: immediate display update, completion check, and parent notification
   useEffect(() => {
     if (!isLoaded) return;
     
@@ -43,12 +43,9 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       setIsCompleted(false);
     }
     
-    // Save to storage
-    saveDictationInput(targetText, sentenceIndex, userInput);
-    
     // Notify parent of real-time changes
     onInputChange?.(userInput);
-  }, [targetText, sentenceIndex, saveDictationInput, isLoaded, onComplete, onInputChange]);
+  }, [targetText, sentenceIndex, isLoaded, onComplete, onInputChange, userInput]);
 
   // Focus input when it becomes visible and maintain focus
   useEffect(() => {
@@ -108,6 +105,20 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     return () => document.removeEventListener('click', handleDocumentClick);
   }, [isVisible, isLoaded]);
 
+  // Save current state before page unload
+  useEffect(() => {
+    if (!isVisible || !isLoaded) return;
+
+    const handleBeforeUnload = () => {
+      if (userInput.trim()) {
+        saveDictationInput(targetText, sentenceIndex, userInput);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isVisible, isLoaded, userInput, targetText, sentenceIndex, saveDictationInput]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
@@ -124,6 +135,11 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       const truncatedValue = truncateToTargetLength(filteredValue, targetLetterCount);
       setUserInput(truncatedValue);
       onInputChange?.(truncatedValue);
+      
+      // Save to storage immediately
+      if (isLoaded) {
+        saveDictationInput(targetText, sentenceIndex, truncatedValue);
+      }
     } else {
       // Check if we should auto-add a space after a completed word
       const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
@@ -131,6 +147,11 @@ export const DictationInput: React.FC<DictationInputProps> = ({
       const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
       setUserInput(newValue);
       onInputChange?.(newValue);
+      
+      // Save to storage immediately
+      if (isLoaded) {
+        saveDictationInput(targetText, sentenceIndex, newValue);
+      }
     }
     
     // Update cursor position after input change

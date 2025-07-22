@@ -31,7 +31,7 @@ interface RecitationProviderProps {
 
 export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children }) => {
   const speech = useSpeechContext();
-  const { getAllRecitationInputs, isLoaded: isRecitationStorageLoaded } = useRecitationStorage();
+  const { getAllRecitationInputs, saveRecitationInput, isLoaded: isRecitationStorageLoaded } = useRecitationStorage();
   
   // Recitation state
   const [isActive, setIsActive] = useState(false);
@@ -80,7 +80,12 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
       ...prev,
       [sentenceId]: input
     }));
-  }, []);
+    
+    // Save to storage immediately
+    if (isRecitationStorageLoaded) {
+      saveRecitationInput(sentence, sentenceIndex, input);
+    }
+  }, [isRecitationStorageLoaded, saveRecitationInput]);
 
   // Handle recitation completion
   const onComplete = useCallback(() => {
@@ -235,6 +240,37 @@ export const RecitationProvider: React.FC<RecitationProviderProps> = ({ children
       setStoredInputs(getAllRecitationInputs());
     }
   }, [isRecitationStorageLoaded, getAllRecitationInputs, currentSentenceIndex, isActive]);
+
+  // Save current state before page unload
+  useEffect(() => {
+    if (!isRecitationStorageLoaded || !isActive) return;
+
+    const handleBeforeUnload = () => {
+      // Save all active inputs before page unload
+      Object.entries(activeInputs).forEach(([sentenceId, input]) => {
+        if (input.trim()) {
+          // Extract sentence index and content from sentenceId (format: "index-textHash")
+          const parts = sentenceId.split('-');
+          const sentenceIndex = parseInt(parts[0]);
+          const storedContentHash = parts.slice(1).join('-');
+          
+          // Find the matching sentence by content hash
+          for (let i = 0; i < speech.sentences.length; i++) {
+            const currentSentence = speech.sentences[i];
+            const currentContentHash = currentSentence.trim().substring(0, 50);
+            
+            if (currentContentHash === storedContentHash) {
+              saveRecitationInput(currentSentence, sentenceIndex, input);
+              break;
+            }
+          }
+        }
+      });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isRecitationStorageLoaded, isActive, activeInputs, speech.sentences, saveRecitationInput]);
 
   const value: RecitationContextType = {
     // State
