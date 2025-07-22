@@ -15,12 +15,17 @@ export const DictationInput: React.FC<DictationInputProps> = ({
 }) => {
   const [userInput, setUserInput] = useState(initialInput);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const { saveDictationInput, isLoaded } = useDictationStorage();
 
-
-
+  // Update cursor position when input changes
+  const updateCursorPosition = () => {
+    if (inputRef.current) {
+      setCursorPosition(inputRef.current.selectionStart || 0);
+    }
+  };
 
   // Save current text when sentence changes
   useEffect(() => {
@@ -110,7 +115,6 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     return () => document.removeEventListener('click', handleDocumentClick);
   }, [isVisible, isLoaded]);
 
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
@@ -123,23 +127,36 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
     setUserInput(newValue);
     onInputChange?.(newValue);
+    
+    // Update cursor position after input change
+    setTimeout(updateCursorPosition, 0);
   };
 
   const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Allow all keys for typing
-    return;
+    // Update cursor position after key events
+    setTimeout(updateCursorPosition, 0);
   };
 
+  const handleKeyUp = (_e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Update cursor position after key events
+    setTimeout(updateCursorPosition, 0);
+  };
 
+  const handleClick = (_e: React.MouseEvent<HTMLInputElement>) => {
+    // Update cursor position after mouse events
+    setTimeout(updateCursorPosition, 0);
+  };
 
   // Generate display text with word-by-word progression
   const generateDisplayText = () => {
     if (!targetText) return "";
 
-    const cursorPosition = DictationService.getNextCharacterPosition(targetText, userInput);
+    // Convert cursor position to letter position (excluding spaces)
+    const letterPosition = userInput.substring(0, cursorPosition).replace(/[^a-zA-Z]/g, '').length;
+    
     return DictationDisplayUtils.generateMaskedDisplay(targetText, userInput, {
       showCursor: true,
-      cursorPosition
+      cursorPosition: letterPosition
     });
   };
 
@@ -160,6 +177,8 @@ export const DictationInput: React.FC<DictationInputProps> = ({
         value={userInput}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
+        onKeyUp={handleKeyUp}
+        onClick={handleClick}
         className="absolute opacity-0"
         autoComplete="off"
         spellCheck={false}
