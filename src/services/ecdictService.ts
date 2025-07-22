@@ -1,4 +1,5 @@
 import { DictionaryEntry, ECDictEntry } from '../types/index';
+import { extractCleanWord } from '../utils/textProcessing';
 
 class ECDictService {
   private dictionary: Map<string, ECDictEntry> = new Map();
@@ -256,7 +257,8 @@ class ECDictService {
   }
 
   lookupWord(word: string): DictionaryEntry | null {
-    const entry = this.dictionary.get(word.toLowerCase());
+    const cleanWord = extractCleanWord(word).toLowerCase();
+    const entry = this.dictionary.get(cleanWord);
     if (!entry) return null;
 
     // Convert ECDICT entry to DictionaryEntry format
