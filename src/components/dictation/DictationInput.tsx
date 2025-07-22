@@ -114,15 +114,53 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     // Only allow letters and spaces
     const filteredValue = value.replace(/[^a-zA-Z\s]/g, '');
     
-    // Check if we should auto-add a space after a completed word
-    const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
+    // Get target letter count (excluding spaces and punctuation)
+    const targetLetterCount = DictationService.getTargetLetterCount(targetText);
+    const currentLetterCount = filteredValue.replace(/\s+/g, '').length;
     
-    const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
-    setUserInput(newValue);
-    onInputChange?.(newValue);
+    // Check if adding this input would exceed the target length
+    if (currentLetterCount > targetLetterCount) {
+      // Truncate to target length
+      const truncatedValue = truncateToTargetLength(filteredValue, targetLetterCount);
+      setUserInput(truncatedValue);
+      onInputChange?.(truncatedValue);
+    } else {
+      // Check if we should auto-add a space after a completed word
+      const shouldAddSpace = DictationService.shouldAutoSpace(targetText, filteredValue);
+      
+      const newValue = shouldAddSpace ? filteredValue + ' ' : filteredValue;
+      setUserInput(newValue);
+      onInputChange?.(newValue);
+    }
     
     // Update cursor position after input change
     handleCursorEvent();
+  };
+
+  // Helper method to truncate input to target length
+  const truncateToTargetLength = (input: string, targetLength: number): string => {
+    const letters = input.replace(/\s+/g, '');
+    if (letters.length <= targetLength) {
+      return input;
+    }
+    
+    // Truncate letters to target length
+    const truncatedLetters = letters.substring(0, targetLength);
+    
+    // Reconstruct the string with spaces in their original positions
+    let result = '';
+    let letterIndex = 0;
+    
+    for (let i = 0; i < input.length && letterIndex < targetLength; i++) {
+      if (input[i] === ' ') {
+        result += ' ';
+      } else {
+        result += truncatedLetters[letterIndex];
+        letterIndex++;
+      }
+    }
+    
+    return result;
   };
 
   const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
