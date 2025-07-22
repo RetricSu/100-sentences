@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useDictationStorage } from "../../hooks/useDictationStorage";
+import { useCursorPosition } from "../../hooks/useCursorPosition";
 import { DictationDisplayUtils } from "../../utils/dictationDisplay";
 import { DictationService } from "../../services/dictationService";
 import { DictationInputProps } from "../../types/dictation";
@@ -15,17 +16,9 @@ export const DictationInput: React.FC<DictationInputProps> = ({
 }) => {
   const [userInput, setUserInput] = useState(initialInput);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   
+  const { cursorPosition, inputRef, handleCursorEvent } = useCursorPosition();
   const { saveDictationInput, isLoaded } = useDictationStorage();
-
-  // Update cursor position when input changes
-  const updateCursorPosition = () => {
-    if (inputRef.current) {
-      setCursorPosition(inputRef.current.selectionStart || 0);
-    }
-  };
 
   // Save current text when sentence changes
   useEffect(() => {
@@ -129,22 +122,22 @@ export const DictationInput: React.FC<DictationInputProps> = ({
     onInputChange?.(newValue);
     
     // Update cursor position after input change
-    setTimeout(updateCursorPosition, 0);
+    handleCursorEvent();
   };
 
   const handleKeyDown = (_e: React.KeyboardEvent<HTMLInputElement>) => {
     // Update cursor position after key events
-    setTimeout(updateCursorPosition, 0);
+    handleCursorEvent();
   };
 
   const handleKeyUp = (_e: React.KeyboardEvent<HTMLInputElement>) => {
     // Update cursor position after key events
-    setTimeout(updateCursorPosition, 0);
+    handleCursorEvent();
   };
 
   const handleClick = (_e: React.MouseEvent<HTMLInputElement>) => {
     // Update cursor position after mouse events
-    setTimeout(updateCursorPosition, 0);
+    handleCursorEvent();
   };
 
   // Generate display text with word-by-word progression
