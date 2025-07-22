@@ -1,5 +1,6 @@
 import { RecitationStorage, RecitationProgressStats, RecitationValidationResult } from '../types/recitation';
 import { RecitationDisplayUtils } from '../utils/recitationDisplay';
+import { extractCleanWord } from '../utils/textProcessing';
 
 /**
  * Service layer for recitation business logic
@@ -19,7 +20,8 @@ export class RecitationService {
    * Extract clean words from text (letters only, lowercase)
    */
   static extractCleanWords(text: string): string[] {
-    return text.toLowerCase().match(/[a-z]+/g) || [];
+    const words = text.toLowerCase().match(/[a-z]+/g) || [];
+    return words.map(word => extractCleanWord(word));
   }
 
   /**

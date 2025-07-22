@@ -1,4 +1,5 @@
 import { DictationStorage, DictationProgressStats, DictationValidationResult } from '../types/dictation';
+import { extractCleanWord } from '../utils/textProcessing';
 
 /**
  * Service layer for dictation business logic
@@ -19,15 +20,8 @@ export class DictationService {
    */
   static extractCleanWords(text: string): string[] {
     return text.split(/\s+/)
-      .map(word => word.replace(/[^a-zA-Z]/g, ''))
+      .map(word => extractCleanWord(word))
       .filter(word => word.length > 0);
-  }
-
-  /**
-   * Extract clean word from single token (letters only)
-   */
-  static extractCleanWord(word: string): string {
-    return word.replace(/[^a-zA-Z]/g, '');
   }
 
   /**

@@ -1,4 +1,5 @@
 import { WrongWordEntry } from '../types/dictation';
+import { extractCleanWord } from '../utils/textProcessing';
 
 export class WrongWordService {
   /**
@@ -40,7 +41,7 @@ export class WrongWordService {
         currentWordHasWrongChar = false;
       } else {
         // Word with letters
-        const cleanWord = this.extractCleanWord(token);
+        const cleanWord = extractCleanWord(token);
         if (cleanWord.length === 0) {
           // Pure punctuation - skip
           continue;
@@ -81,13 +82,6 @@ export class WrongWordService {
     }
 
     return wrongWords;
-  }
-
-  /**
-   * Extract clean word (letters only) for comparison
-   */
-  private static extractCleanWord(word: string): string {
-    return word.replace(/[^a-zA-Z]/g, '');
   }
 
   /**

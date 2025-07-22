@@ -7,6 +7,7 @@ import { DictionaryProvider } from "./contexts/DictionaryContext";
 import { EventHandlersProvider } from "./contexts/EventHandlersContext";
 import { DictationProvider } from "./contexts/DictationContext";
 import { RecitationProvider } from "./contexts/RecitationContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { AppRouter } from "./router";
 
 createRoot(document.getElementById("root")!).render(
@@ -17,7 +18,9 @@ createRoot(document.getElementById("root")!).render(
           <DictationProvider>
             <RecitationProvider>
               <EventHandlersProvider>
-                <AppRouter />
+                <NotificationProvider>
+                  <AppRouter />
+                </NotificationProvider>
               </EventHandlersProvider>
             </RecitationProvider>
           </DictationProvider>

@@ -1,19 +1,13 @@
 import React from "react";
 import { CharacterDisplayOptions, DictationProgressStats } from "../types/dictation";
 import { DictationService } from "../services/dictationService";
+import { extractCleanWord } from "./textProcessing";
 
 /**
  * Shared utility for dictation display logic
  * Consolidates character rendering logic used across multiple components
  */
 export class DictationDisplayUtils {
-  /**
-   * Extract clean word without punctuation
-   */
-  static extractCleanWord(word: string): string {
-    return DictationService.extractCleanWord(word);
-  }
-
   /**
    * Extract all clean words from text
    */
@@ -51,7 +45,7 @@ export class DictationDisplayUtils {
           </span>
         );
       } else {
-        const cleanWord = this.extractCleanWord(token);
+        const cleanWord = extractCleanWord(token);
         if (cleanWord.length === 0) {
           // Pure punctuation
           result.push(
@@ -133,7 +127,7 @@ export class DictationDisplayUtils {
       if (token.trim() === '') {
         result += '&nbsp;';
       } else {
-        const cleanWord = this.extractCleanWord(token);
+        const cleanWord = extractCleanWord(token);
         if (cleanWord.length === 0) {
           result += `<span class="text-gray-700">${token}</span>`;
         } else {
