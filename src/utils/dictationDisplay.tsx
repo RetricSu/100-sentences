@@ -109,6 +109,15 @@ export class DictationDisplayUtils {
               );
             }
           });
+          
+          // Add cursor after the last character if user has completed typing
+          if (showCursor && globalLetterIndex === userLetters.length && cursorPosition === userLetters.length) {
+            charResults.push(
+              <span key={`${tokenIndex}-cursor-end`} className="inline-block min-w-[1ch] text-gray-800 bg-gray-400 animate-pulse opacity-50">
+                _
+              </span>
+            );
+          }
           result.push(
             <span key={tokenIndex}>
               {charResults}
@@ -170,6 +179,11 @@ export class DictationDisplayUtils {
             } else {
               result += `<span class="text-gray-700">${char}</span>`;
             }
+          }
+          
+          // Add cursor after the last character if user has completed typing
+          if (showCursor && globalLetterIndex === userLetters.length && cursorPosition === userLetters.length) {
+            result += `<span class="inline-block min-w-[1ch] text-gray-800 bg-gray-400 animate-pulse opacity-50">_</span>`;
           }
         }
       }
