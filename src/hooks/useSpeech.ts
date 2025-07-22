@@ -322,6 +322,13 @@ export const useSpeech = () => {
     speakNext();
   }, [state.isSupported, state.sentences, updateState]);
 
+  // Speak sentence by index
+  const speakSentenceByIndex = useCallback((index: number) => {
+    if (index >= 0 && index < state.sentences.length) {
+      speak(state.sentences[index], index);
+    }
+  }, [state.sentences, speak]);
+
   // Stop all speech
   const stop = useCallback(() => {
     if (state.isSupported) {
@@ -369,6 +376,7 @@ export const useSpeech = () => {
     setRate,
     speak,
     speakCurrentSentence,
+    speakSentenceByIndex,
     speakAll,
     stop,
     testVoice,

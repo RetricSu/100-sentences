@@ -92,8 +92,7 @@ export const Header: React.FC = () => {
                   const newIndex = speech.currentSentenceIndex - 1;
                   if (newIndex >= 0) {
                     speech.jumpToSentence(newIndex);
-                    // Add a small delay to ensure the jump completes before speaking
-                    setTimeout(() => speech.speakCurrentSentence(), 50);
+                    speech.speakSentenceByIndex(newIndex);
                   }
                 }}
                 disabled={
@@ -146,8 +145,7 @@ export const Header: React.FC = () => {
                   const newIndex = speech.currentSentenceIndex + 1;
                   if (newIndex < speech.sentences.length) {
                     speech.jumpToSentence(newIndex);
-                    // Add a small delay to ensure the jump completes before speaking
-                    setTimeout(() => speech.speakCurrentSentence(), 50);
+                    speech.speakSentenceByIndex(newIndex);
                   }
                 }}
                 disabled={
