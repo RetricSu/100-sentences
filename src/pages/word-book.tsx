@@ -4,6 +4,7 @@ import { WrongWordEntry } from "../types/dictation";
 import { BaseLayout } from "../components/layout/BaseLayout";
 import { useAppStateContext } from "../contexts/AppStateContext";
 import { useDictionaryContext } from "../contexts/DictionaryContext";
+import { useNotification } from "../hooks/useNotification";
 
 export const WrongWordBookPage: React.FC = () => {
   const wrongWordBook = useWrongWordBook();
@@ -334,6 +335,7 @@ const WrongWordEntryItem: React.FC<{
   const wrongWordBook = useWrongWordBook();
   const appState = useAppStateContext();
   const dictionary = useDictionaryContext();
+  const notification = useNotification();
 
   // Check if this word appears in multiple contexts
   const wordAppearances = Object.values(wrongWordBook.wrongWordBook).flatMap(
@@ -345,9 +347,20 @@ const WrongWordEntryItem: React.FC<{
   const isMultiContext = wordAppearances.length > 1;
 
   const handleRemove = () => {
-    if (confirm("Remove this word from your wrong word book?")) {
-      wrongWordBook.removeWrongWord(textId, entry.id);
-    }
+    notification.warning(
+      '确认删除',
+      `确定要从错词本中删除 "${entry.word}" 吗？`,
+      {
+        duration: 0, // No auto-dismiss
+        action: {
+          label: '确认删除',
+          onClick: () => {
+            wrongWordBook.removeWrongWord(textId, entry.id);
+            notification.success('删除成功', `已从错词本中删除 "${entry.word}"`);
+          }
+        }
+      }
+    );
   };
 
   return (

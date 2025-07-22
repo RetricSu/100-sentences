@@ -3,6 +3,7 @@ import { useWrongWordBook } from '../../hooks/useWrongWordBook';
 import { useDictationStorage } from '../../hooks/useDictationStorage';
 import { useSpeechContext } from '../../contexts/SpeechContext';
 import { WrongWordService } from '../../services/wrongWordService';
+import { useNotification } from '../../hooks/useNotification';
 
 export const WrongWordSaveButton: React.FC = () => {
   const [showButton, setShowButton] = useState(false);
@@ -11,6 +12,7 @@ export const WrongWordSaveButton: React.FC = () => {
   const wrongWordBook = useWrongWordBook();
   const dictationStorage = useDictationStorage();
   const speech = useSpeechContext();
+  const notification = useNotification();
 
   // Check if there are any dictation inputs to save
   useEffect(() => {
@@ -81,22 +83,28 @@ export const WrongWordSaveButton: React.FC = () => {
       });
       
       // Show success message with details
+      let title = '';
       let message = '';
+      
       if (addedCount > 0 && skippedCount > 0) {
-        message = `Added ${addedCount} new wrong words to your book. Skipped ${skippedCount} duplicates.`;
+        title = '错词保存成功';
+        message = `已添加 ${addedCount} 个新错词到您的错词本。跳过了 ${skippedCount} 个重复项。`;
       } else if (addedCount > 0) {
-        message = `Added ${addedCount} wrong words to your book!`;
+        title = '错词保存成功';
+        message = `已添加 ${addedCount} 个错词到您的错词本！`;
       } else if (skippedCount > 0) {
-        message = `All ${skippedCount} wrong words were already in your book.`;
+        title = '错词已存在';
+        message = `所有 ${skippedCount} 个错词都已存在于您的错词本中。`;
       } else {
-        message = 'No wrong words to save.';
+        title = '无需保存';
+        message = '没有错词需要保存。';
       }
       
-      alert(message);
+      notification.success(title, message);
       
     } catch (error) {
       console.error('Error saving wrong words:', error);
-      alert('Error saving wrong words. Please try again.');
+      notification.error('保存失败', '保存错词时出现错误，请重试。');
     } finally {
       setIsSaving(false);
     }

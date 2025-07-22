@@ -2,6 +2,7 @@ import React from 'react';
 import { Header } from '../Header';
 import { SettingsPanel } from '../SettingsPanel';
 import { DictionaryPopup } from '../DictionaryPopup';
+import { NotificationContainer } from '../notify/NotificationContainer';
 import { useAppStateContext } from '../../contexts/AppStateContext';
 import { useTextManagement } from '../../hooks/useTextManagement';
 import { useSpeechContext } from '../../contexts/SpeechContext';
@@ -67,6 +68,9 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
 
       {/* Dictionary Popup */}
       <DictionaryPopup />
+      
+      {/* Notification Container */}
+      <NotificationContainer />
     </div>
   );
 }; 

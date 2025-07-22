@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useLocalStorage, SavedText } from './useLocalStorage';
 import { useDictationStorage } from './useDictationStorage';
 import useLocalStorageState from 'use-local-storage-state';
+import { useNotification } from './useNotification';
 
 interface UseSettingsPanelProps {
   onTextUpdate: (text: string) => void;
@@ -14,6 +15,9 @@ export const useSettingsPanel = ({ onTextUpdate, defaultText = "", displayText }
   const [inputText, setInputText] = useState("");
   const [saveTextTitle, setSaveTextTitle] = useState("");
   const [showSavedTexts, setShowSavedTexts] = useState(true);
+  
+  // Notification system
+  const notification = useNotification();
 
   // Saved texts management
   const {
@@ -46,8 +50,8 @@ export const useSettingsPanel = ({ onTextUpdate, defaultText = "", displayText }
     setSaveTextTitle("");
     
     // Show a brief success message
-    alert("Text saved successfully!");
-  }, [displayText, saveTextTitle, saveText]);
+    notification.success("文本保存成功", "文本已成功保存到本地存储");
+  }, [displayText, saveTextTitle, saveText, notification]);
 
   // Handle loading saved text
   const handleLoadText = useCallback((savedText: SavedText) => {
@@ -74,10 +78,21 @@ export const useSettingsPanel = ({ onTextUpdate, defaultText = "", displayText }
 
   // Handle dictation inputs clearing
   const handleClearDictationInputs = useCallback(() => {
-    if (confirm("Are you sure you want to clear all dictation progress? This action cannot be undone.")) {
-      clearAllDictationInputs();
-    }
-  }, [clearAllDictationInputs]);
+    notification.warning(
+      '确认清除',
+      '确定要清除所有默写进度吗？此操作无法撤销。',
+      {
+        duration: 0, // No auto-dismiss
+        action: {
+          label: '确认清除',
+          onClick: () => {
+            clearAllDictationInputs();
+            notification.success('清除成功', '已清除所有默写进度');
+          }
+        }
+      }
+    );
+  }, [clearAllDictationInputs, notification]);
 
   return {
     // Internal state
