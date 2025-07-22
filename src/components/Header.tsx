@@ -88,9 +88,14 @@ export const Header: React.FC = () => {
             {/* Navigation controls group */}
             <div className="flex items-center rounded-xl overflow-hidden shadow-sm">
               <button
-                onClick={() =>
-                  speech.jumpToSentence(speech.currentSentenceIndex - 1)
-                }
+                onClick={() => {
+                  const newIndex = speech.currentSentenceIndex - 1;
+                  if (newIndex >= 0) {
+                    speech.jumpToSentence(newIndex);
+                    // Add a small delay to ensure the jump completes before speaking
+                    setTimeout(() => speech.speakCurrentSentence(), 50);
+                  }
+                }}
                 disabled={
                   speech.currentSentenceIndex === 0 || speech.isSpeaking
                 }
@@ -137,9 +142,14 @@ export const Header: React.FC = () => {
               </button>
 
               <button
-                onClick={() =>
-                  speech.jumpToSentence(speech.currentSentenceIndex + 1)
-                }
+                onClick={() => {
+                  const newIndex = speech.currentSentenceIndex + 1;
+                  if (newIndex < speech.sentences.length) {
+                    speech.jumpToSentence(newIndex);
+                    // Add a small delay to ensure the jump completes before speaking
+                    setTimeout(() => speech.speakCurrentSentence(), 50);
+                  }
+                }}
                 disabled={
                   speech.currentSentenceIndex === speech.sentences.length - 1 ||
                   speech.isSpeaking
