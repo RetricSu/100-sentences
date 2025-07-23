@@ -65,55 +65,85 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
   // Load voices and sync with saved voice info
   React.useEffect(() => {
+    let isSubscribed = true;
+
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
       const englishVoices = availableVoices
         .filter((voice) => voice.lang.startsWith("en"))
         .map((voice, index) => ({ voice, index }));
 
-      setVoices(englishVoices);
+      // Only update if we have voices and they actually changed
+      if (englishVoices.length > 0) {
+        setVoices((prevVoices) => {
+          // Prevent unnecessary re-renders if voices haven't actually changed
+          if (prevVoices.length === englishVoices.length) {
+            const voicesMatch = prevVoices.every(
+              (prev, index) =>
+                prev.voice.name === englishVoices[index].voice.name &&
+                prev.voice.lang === englishVoices[index].voice.lang,
+            );
+            if (voicesMatch) return prevVoices;
+          }
+          return englishVoices;
+        });
 
-      // Try to restore saved voice
-      if (selectedVoiceInfo) {
-        const savedVoice = englishVoices.find(
-          (v) =>
-            v.voice.name === selectedVoiceInfo.name &&
-            v.voice.lang === selectedVoiceInfo.lang
-        )?.voice;
-        if (savedVoice) {
-          setSelectedVoice(savedVoice);
-          return;
+        if (!isSubscribed) return;
+
+        // Try to restore saved voice - but only once when voices are stable
+        if (selectedVoiceInfo) {
+          const savedVoice = englishVoices.find(
+            (v) =>
+              v.voice.name === selectedVoiceInfo.name &&
+              v.voice.lang === selectedVoiceInfo.lang,
+          )?.voice;
+          if (savedVoice) {
+            setSelectedVoice(savedVoice);
+            return;
+          }
         }
-      }
 
-      // Auto-select best voice if no saved voice
-      const bestVoice =
-        englishVoices.find(
-          (v) => v.voice.lang === "en-US" && v.voice.name.includes("Microsoft")
-        )?.voice ||
-        englishVoices.find(
-          (v) => v.voice.lang === "en-US" && v.voice.name.includes("David")
-        )?.voice ||
-        englishVoices.find(
-          (v) => v.voice.lang === "en-US" && v.voice.name.includes("Zira")
-        )?.voice ||
-        englishVoices.find(
-          (v) => v.voice.lang === "en-US" && v.voice.localService
-        )?.voice ||
-        englishVoices.find(
-          (v) => v.voice.lang.startsWith("en") && v.voice.localService
-        )?.voice ||
-        englishVoices[0]?.voice;
+        // Auto-select best voice only if none is selected or it becomes invalid
+        if (
+          !selectedVoice ||
+          !englishVoices.find((v) => v.voice === selectedVoice)
+        ) {
+          const bestVoice =
+            englishVoices.find(
+              (v) =>
+                v.voice.lang === "en-US" && v.voice.name.includes("Microsoft"),
+            )?.voice ||
+            englishVoices.find(
+              (v) => v.voice.lang === "en-US" && v.voice.name.includes("David"),
+            )?.voice ||
+            englishVoices.find(
+              (v) => v.voice.lang === "en-US" && v.voice.name.includes("Zira"),
+            )?.voice ||
+            englishVoices.find(
+              (v) => v.voice.lang === "en-US" && v.voice.localService,
+            )?.voice ||
+            englishVoices.find(
+              (v) => v.voice.lang.startsWith("en") && v.voice.localService,
+            )?.voice ||
+            englishVoices[0]?.voice;
 
-      if (bestVoice) {
-        setSelectedVoice(bestVoice);
+          if (bestVoice && isSubscribed) {
+            setSelectedVoice(bestVoice);
+          }
+        }
       }
     };
 
+    // Small delay to prevent rapid-fire events from causing flicker
+    const debouncedLoadVoices = () => {
+      setTimeout(loadVoices, 100);
+    };
+
     loadVoices();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+    window.speechSynthesis.onvoiceschanged = debouncedLoadVoices;
 
     return () => {
+      isSubscribed = false;
       window.speechSynthesis.onvoiceschanged = null;
     };
   }, [selectedVoiceInfo]);
@@ -122,13 +152,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const handleVoiceSelectChange = React.useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
       const index = parseInt(e.target.value);
-      if (index >= 0 && voices[index]) {
+      if (index >= 0 && index < voices.length && voices[index]) {
         const voice = voices[index].voice;
         setSelectedVoice(voice);
         handleVoiceChange(voice);
       }
     },
-    [voices, handleVoiceChange]
+    [voices, handleVoiceChange],
   );
 
   // Handle rate slider change
@@ -137,14 +167,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       const newRate = parseFloat(e.target.value);
       handleRateChange(newRate);
     },
-    [handleRateChange]
+    [handleRateChange],
   );
 
   // Handle navigate to wrong word book page
   const handleNavigateToWrongWordBookPage = React.useCallback(() => {
     navigate("/wrong-words");
     onClose?.();
-  }, [navigate]);
+  }, [navigate, onClose]);
 
   return (
     <div className="w-full bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-6">
@@ -294,13 +324,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           语音选择
         </label>
         <select
-          value={voices.findIndex((v) => v.voice === selectedVoice)}
+          value={
+            selectedVoice
+              ? voices.findIndex(
+                  (v) =>
+                    v.voice.name === selectedVoice.name &&
+                    v.voice.lang === selectedVoice.lang,
+                )
+              : -1
+          }
           onChange={handleVoiceSelectChange}
           className="input-primary text-sm"
+          disabled={voices.length === 0}
         >
           <option value={-1}>选择语音...</option>
           {voices.map((voiceOption, index) => (
-            <option key={index} value={index}>
+            <option
+              key={`${voiceOption.voice.name}-${voiceOption.voice.lang}-${index}`}
+              value={index}
+            >
               {voiceOption.voice.name} ({voiceOption.voice.lang})
               {voiceOption.voice.localService ? " 本地" : " 在线"}
             </option>
