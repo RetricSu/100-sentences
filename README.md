@@ -28,10 +28,11 @@
 - **实时转录** - 实时显示语音识别结果
 - **进度跟踪** - 跟踪朗读准确度和完成度
 
-### 📖 字典功能
-- **在线词典** - 优先使用免费的Dictionary API获取完整释义
-- **离线备份** - 内置常用词汇，网络失败时自动切换
-- **详细信息** - 显示音标、词性、释义和例句
+### 📖 AI 字典功能
+- **AI 翻译** - 使用 Xenova/opus-mt-en-zh 模型进行智能英文到中文翻译
+- **在线词典** - 结合 Dictionary API 获取完整英文释义
+- **智能缓存** - 翻译模型自动下载并缓存，提升后续使用体验
+- **详细信息** - 显示音标、词性、释义、例句和 AI 翻译
 - **美观弹窗** - 现代化设计的字典弹窗
 
 ## 技术栈
@@ -43,7 +44,7 @@
 - **Web Speech API** - 浏览器语音合成
 - **SpeechRecognition API** - 浏览器语音识别服务
 - **Dictionary API** - 免费在线词典服务
-- **内置词典** - 内置常用词汇，网络失败时自动切换
+- **@xenova/transformers** - AI 翻译模型，支持离线翻译
 
 ## 浏览器支持
 
@@ -55,24 +56,21 @@
 
 ## 开发说明
 
-### 添加新词汇到离线词典
+### AI 翻译模型
 
-编辑 `src/data/offlineDictionary.ts` 文件：
+应用使用 Xenova/opus-mt-en-zh 模型进行英文到中文翻译：
 
-```typescript
-export const offlineDictionary: Record<string, DictionaryEntry> = {
-  'newword': {
-    phonetic: '/njuːwɜːrd/',
-    meanings: [
-      { 
-        partOfSpeech: 'noun', 
-        definition: 'A word that has been recently created.',
-        example: 'This is a newword in our dictionary.'
-      }
-    ]
-  },
-  // ... 其他词汇
-};
+- **首次使用** - 模型会自动下载（约 50MB），下载完成后会缓存到浏览器
+- **离线使用** - 模型下载后支持完全离线翻译
+- **智能集成** - 与字典功能无缝集成，提供更准确的翻译
+
+### 测试 AI 翻译
+
+访问 `/transformer-test` 页面可以测试 AI 翻译功能：
+
+```bash
+npm run dev
+# 然后访问 http://localhost:5173/transformer-test
 ```
 
 ## 许可证

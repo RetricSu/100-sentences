@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { BaseLayout } from '../components/layout/BaseLayout';
-import { pipeline, env, TranslationSingle } from '@xenova/transformers';
-// Disable local models
-env.allowLocalModels = false;
-//https://github.com/huggingface/transformers.js/issues/142
+import { useTranslationContext } from '../contexts/TranslationContext';
 
 const TransformerTestPage: React.FC = () => {
   const [inputText, setInputText] = useState('Hello world');
   const [outputText, setOutputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const translation = useTranslationContext();
 
   const handleTranslate = async () => {
     if (!inputText.trim()) {
@@ -22,20 +21,13 @@ const TransformerTestPage: React.FC = () => {
     setOutputText('');
 
     try {
-	
-      console.log('Loading translation model...');
+      console.log('Starting translation...');
       
-      // Use the pipeline without custom configuration
-      const generator = await pipeline('translation', 'Xenova/opus-mt-en-zh');
-      
-      console.log('Model loaded successfully, starting translation...');
-      const result = await generator(inputText);
+      const result = await translation.translate(inputText);
       
       console.log('Translation result:', result);
       
-      const translationText = (result[0] as TranslationSingle).translation_text;
-      
-      setOutputText(translationText);
+      setOutputText(result.translationText);
     } catch (err) {
       console.error('Translation error:', err);
       setError(err instanceof Error ? err.message : 'Translation failed');
@@ -48,9 +40,31 @@ const TransformerTestPage: React.FC = () => {
     <BaseLayout>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg border border-stone-200 p-8">
-          <h1 className="text-3xl font-bold text-stone-800 mb-6">Transformers Test</h1>
+          <h1 className="text-3xl font-bold text-stone-800 mb-6">AI Translation Test</h1>
           
           <div className="space-y-6">
+            {/* Model Status */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-blue-800">Translation Model Status</h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    {translation.isReady ? 'Model ready' : 'Model not ready'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  {translation.isDownloading && (
+                    <div className="text-sm text-blue-600">
+                      Downloading: {Math.round(translation.downloadProgress)}%
+                    </div>
+                  )}
+                  {translation.isTranslating && (
+                    <div className="text-sm text-blue-600">Translating...</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Input Section */}
             <div>
               <label htmlFor="input-text" className="block text-sm font-medium text-stone-700 mb-2">
@@ -69,7 +83,7 @@ const TransformerTestPage: React.FC = () => {
             <div>
               <button
                 onClick={handleTranslate}
-                disabled={isLoading}
+                disabled={isLoading || !translation.isReady}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center"
               >
                 {isLoading ? (
@@ -81,13 +95,13 @@ const TransformerTestPage: React.FC = () => {
                     Translating...
                   </>
                 ) : (
-                  'Translate to English'
+                  'Translate to Chinese'
                 )}
               </button>
             </div>
 
             {/* Error Display */}
-            {error && (
+            {(error || translation.error) && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
@@ -97,7 +111,7 @@ const TransformerTestPage: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <div className="mt-2 text-sm text-red-700">{error}</div>
+                    <div className="mt-2 text-sm text-red-700">{error || translation.error}</div>
                   </div>
                 </div>
               </div>
@@ -124,10 +138,11 @@ const TransformerTestPage: React.FC = () => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">Info</h3>
+                  <h3 className="text-sm font-medium text-blue-800">AI Translation</h3>
                   <div className="mt-2 text-sm text-blue-700">
-                    <p>This page tests the @xenova/transformers library for Chinese to English translation.</p>
-                    <p className="mt-1">The model will be downloaded on first use (may take a few minutes).</p>
+                    <p>This page tests the AI-powered translation service using the Xenova/opus-mt-en-zh model.</p>
+                    <p className="mt-1">The model will be downloaded on first use and cached for future translations.</p>
+                    <p className="mt-1">This replaces the large 300MB dictionary file with a more efficient AI solution.</p>
                   </div>
                 </div>
               </div>

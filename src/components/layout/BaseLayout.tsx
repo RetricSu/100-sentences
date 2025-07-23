@@ -3,9 +3,11 @@ import { Header } from '../Header';
 import { SettingsPanel } from '../SettingsPanel';
 import { DictionaryPopup } from '../DictionaryPopup';
 import { NotificationContainer } from '../notify/NotificationContainer';
+import { AppInitializationModal } from '../translation/AppInitializationModal';
 import { useAppStateContext } from '../../contexts/AppStateContext';
 import { useTextManagement } from '../../hooks/useTextManagement';
 import { useSpeechContext } from '../../contexts/SpeechContext';
+import { useTranslationContext } from '../../contexts/TranslationContext';
 
 interface BaseLayoutProps {
   children: React.ReactNode;
@@ -21,9 +23,16 @@ export const BaseLayout: React.FC<BaseLayoutProps> = ({
   const appState = useAppStateContext();
   const textManagement = useTextManagement();
   const speech = useSpeechContext();
+  const translation = useTranslationContext();
+
+  // Show initialization modal when model is downloading and not ready
+  const showInitializationModal = translation.isDownloading || (!translation.isReady && !translation.error);
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans flex flex-col">
+      {/* App Initialization Modal */}
+      <AppInitializationModal isVisible={showInitializationModal} />
+
       {/* Header */}
       {showHeader && <Header />}
 
