@@ -1,7 +1,6 @@
 import React from "react";
 import { SavedText } from "../hooks/useLocalStorage";
 import { useSettingsPanel } from "../hooks/useSettingsPanel";
-import { useNavigate } from "react-router-dom";
 
 interface VoiceOption {
   voice: SpeechSynthesisVoice;
@@ -55,8 +54,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     deleteText,
     clearAllTexts,
   } = useSettingsPanel({ onTextUpdate, defaultText, displayText });
-
-  const navigate = useNavigate();
 
   // Get available voices from the browser
   const [voices, setVoices] = React.useState<VoiceOption[]>([]);
@@ -170,12 +167,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     [handleRateChange],
   );
 
-  // Handle navigate to wrong word book page
-  const handleNavigateToWrongWordBookPage = React.useCallback(() => {
-    navigate("/wrong-words");
-    onClose?.();
-  }, [navigate, onClose]);
-
   return (
     <div className="w-full bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-6">
       <div className="flex items-center justify-between border-b border-stone-100 pb-4">
@@ -203,10 +194,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       {/* Show word book page */}
       <div>
-        <button
-          onClick={handleNavigateToWrongWordBookPage}
+        <a
           className="px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-sm bg-gray-100 text-gray-600 hover:bg-gray-200"
-          title="Wrong Word Book"
+          href="/wrong-words"
+          target="_blank"
         >
           <svg
             className="w-4 h-4"
@@ -222,7 +213,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             />
           </svg>
           打开错词本
-        </button>
+        </a>
       </div>
 
       {/* Text Input Section */}
@@ -240,7 +231,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div className="flex gap-2">
           <button
             onClick={handleConvert}
-            className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors font-medium"
+            className="flex-1 px-4 py-2 bg-gray-200 text-black rounded-lg hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors font-medium"
           >
             更新文本
           </button>

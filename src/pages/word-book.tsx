@@ -119,9 +119,9 @@ export const WrongWordBookPage: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Wrong Word Book</h1>
+              <h1 className="text-2xl font-bold text-gray-900">错词本</h1>
               <p className="text-sm text-gray-600 mt-1">
-                {wordsByText.length} entries • {uniqueWords} unique words
+                {wordsByText.length} 条 • {uniqueWords} 个单词
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ export const WrongWordBookPage: React.FC = () => {
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
-              All Texts ({allWrongWords.length})
+              所有文本 ({allWrongWords.length})
             </button>
             {textIds.map((textId) => {
               const text = wrongWordBook.wrongWordBook[textId];
@@ -360,10 +360,10 @@ const CompactWordCard: React.FC<{
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
       {/* Header with word and actions */}
-      <div className="p-4 border-b border-gray-100">
+      <div className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2">
               <h3 className="font-semibold text-gray-900 text-lg">{entry.word}</h3>
               {isMultiContext && (
                 <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
@@ -371,7 +371,6 @@ const CompactWordCard: React.FC<{
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500">{entry.textTitle}</p>
           </div>
           <div className="flex gap-1">
             <button
@@ -397,8 +396,7 @@ const CompactWordCard: React.FC<{
       </div>
 
       {/* Context preview */}
-      <div className="p-4">
-        <div className="text-xs text-gray-500 mb-2">Context:</div>
+      <div className="px-4">
         <div className="space-y-1">
           {entry.sentenceContext.slice(0, 2).map((context, index) => (
             <div key={index} className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
