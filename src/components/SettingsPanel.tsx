@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { SavedText } from "../hooks/useLocalStorage";
 import { useSettingsPanel } from "../hooks/useSettingsPanel";
 
@@ -194,10 +195,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       {/* Show word book page */}
       <div>
-        <a
+        <Link
+          to="/wrong-words"
           className="px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-sm bg-gray-100 text-gray-600 hover:bg-gray-200"
-          href="/wrong-words"
-          target="_blank"
         >
           <svg
             className="w-4 h-4"
@@ -213,7 +213,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             />
           </svg>
           打开错词本
-        </a>
+        </Link>
       </div>
 
       {/* Text Input Section */}

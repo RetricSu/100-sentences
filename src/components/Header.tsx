@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useAppStateContext } from "../contexts/AppStateContext";
 import { useSpeechContext } from "../contexts/SpeechContext";
 import { useDictionaryContext } from "../contexts/DictionaryContext";
@@ -18,9 +19,9 @@ export const Header: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">
-              <a href="/" rel="noopener noreferrer">
+              <Link to="/" className="hover:text-gray-700 transition-colors">
                 百句斩
-              </a>
+              </Link>
             </h1>
             {/* Dictionary status indicator */}
             <div className="flex items-center gap-2 text-sm">
