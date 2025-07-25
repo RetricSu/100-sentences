@@ -72,9 +72,24 @@ export const Header: React.FC = () => {
 
           <div className="flex items-center gap-3">
             {/* Standby button */}
-            <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2 shadow-sm">
-              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-              待机
+            <button
+              onClick={() => {
+                if (speech.isSpeaking) {
+                  speech.stop();
+                }
+              }}
+              className={`px-4 py-2 rounded-xl transition-colors flex items-center gap-2 shadow-sm ${
+                speech.isSpeaking
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  speech.isSpeaking ? "bg-white" : "bg-gray-400"
+                }`}
+              ></div>
+              {speech.isSpeaking ? "停止" : "待机"}
             </button>
 
             {/* Read full text button */}
