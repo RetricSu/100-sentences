@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DictionaryEntry } from '../types/index';
 import { ecdictService } from '../services/ecdictService';
+import { removeZeroWidthChars } from '../utils/textProcessing';
 
 export const useDictionary = () => {
   const [loading, setLoading] = useState(false);
@@ -49,14 +50,17 @@ export const useDictionary = () => {
       setLoading(true);
       setError(null);
 
+      // Clean the word to remove any zero-width characters
+      const cleanWord = removeZeroWidthChars(word);
+
       // Try ECDICT first (offline dictionary with Chinese translations)
-      const ecdictResult = ecdictService.lookupWord(word);
+      const ecdictResult = ecdictService.lookupWord(cleanWord);
       if (ecdictResult) {
         return ecdictResult;
       }
 
       // If not found in ECDICT, try the online API as fallback
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
       
       if (!response.ok) {
         return null;

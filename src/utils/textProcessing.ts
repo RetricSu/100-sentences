@@ -1,6 +1,17 @@
 import { stripHtml } from 'string-strip-html';
 
 /**
+ * Remove zero-width characters and other invisible characters from a string
+ */
+export const removeZeroWidthChars = (str: string): string => {
+  if (typeof str !== 'string') {
+    throw new TypeError('Expected a string');
+  }
+  
+  return str.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2060-\u2064\u206A-\u206F]/g, '').trim();
+};
+
+/**
  * Remove punctuation from a string
  */
 export const removePunctuation = (str: string): string => {
@@ -13,7 +24,7 @@ export const removePunctuation = (str: string): string => {
 };
 
 /**
- * Extract clean word from text (removes punctuation)
+ * Extract clean word from text (removes punctuation and zero-width characters)
  * This is a utility function that can be reused
  */
 export const extractCleanWord = (text: string): string => {
@@ -25,8 +36,11 @@ export const extractCleanWord = (text: string): string => {
     .trim()
     .toLowerCase();
   
+  // Remove zero-width characters and other invisible characters
+  const withoutZeroWidth = removeZeroWidthChars(cleaned);
+  
   // Only return if it contains letters
-  return /[a-zA-Z]/.test(cleaned) ? cleaned : '';
+  return /[a-zA-Z]/.test(withoutZeroWidth) ? withoutZeroWidth : '';
 };
 
 /**

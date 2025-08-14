@@ -5,6 +5,7 @@ import { BaseLayout } from "../components/layout/BaseLayout";
 import { useAppStateContext } from "../contexts/AppStateContext";
 import { useDictionaryContext } from "../contexts/DictionaryContext";
 import { useNotification } from "../hooks/useNotification";
+import { removeZeroWidthChars } from "../utils/textProcessing";
 
 export const WrongWordBookPage: React.FC = () => {
   const wrongWordBook = useWrongWordBook();
@@ -348,9 +349,11 @@ const CompactWordCard: React.FC<{
   };
 
   const handleDictionary = async () => {
-    appState.showDictionary(entry.word);
+    // Clean the word to remove any zero-width characters
+    const cleanWord = removeZeroWidthChars(entry.word);
+    appState.showDictionary(cleanWord);
     try {
-      const result = await dictionary.lookupWord(entry.word);
+      const result = await dictionary.lookupWord(cleanWord);
       appState.setDictionaryDataValue(result);
     } catch (error) {
       console.error("Error looking up word:", error);
@@ -464,9 +467,11 @@ const CompactWordListItem: React.FC<{
   };
 
   const handleDictionary = async () => {
-    appState.showDictionary(entry.word);
+    // Clean the word to remove any zero-width characters
+    const cleanWord = removeZeroWidthChars(entry.word);
+    appState.showDictionary(cleanWord);
     try {
-      const result = await dictionary.lookupWord(entry.word);
+      const result = await dictionary.lookupWord(cleanWord);
       appState.setDictionaryDataValue(result);
     } catch (error) {
       console.error("Error looking up word:", error);
